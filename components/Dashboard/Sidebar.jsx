@@ -58,7 +58,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-67.5 bg-white border-r border-gray-200 flex flex-col justify-between overflow-y-auto">
+    <aside className="fixed left-0 top-0 hidden h-screen w-67.5 flex-col justify-between overflow-y-auto border-r border-gray-200 bg-white md:flex">
       {/* Logo */}
       <div>
         <div className="px-7 py-4">
@@ -159,9 +159,7 @@ export default function Sidebar() {
             <span className="text-[16px] font-medium">9 days remaining</span>
           </div>
 
-          <button className="w-full rounded-xl bg-emerald-500 py-3 text-[16px] font-semibold text-white transition hover:bg-emerald-600">
-            Upgrade
-          </button>
+          <button className="w-full rounded-xl bg-emerald-500 py-3 text-[16px] font-semibold text-white transition hover:bg-emerald-600">Upgrade</button>
         </div>
       </div>
     </aside>

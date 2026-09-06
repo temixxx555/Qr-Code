@@ -5,6 +5,32 @@ import QRCode from "@/app/models/QrCode.js";
 import { connectDB } from "@/app/lib/mongodb.js";
 import { getAuthenticatedUser } from "@/app/lib/auth.js";
 
+const supportedTypes = new Set(["website", "whatsapp", "vcard", "pdf", "wifi", "email", "phone", "sms", "text", "social", "instagram", "facebook", "youtube", "menu", "business", "app", "links", "video", "images", "mp3"]);
+
+function validateContent(type, content) {
+  if (!supportedTypes.has(type)) return "Unsupported QR code type";
+  if (type === "website" || ["pdf", "links", "business", "video", "images", "facebook", "instagram", "social", "menu", "mp3"].includes(type)) {
+    try { const url = new URL(content.url); if (!["http:", "https:"].includes(url.protocol)) return "Please provide a valid HTTP or HTTPS URL"; content.url = url.toString(); } catch { return "Please provide a valid destination URL"; }
+  } else if (type === "whatsapp" && !String(content.phone || "").replace(/\D/g, "")) return "A WhatsApp number is required";
+  else if (type === "wifi" && !String(content.ssid || "").trim()) return "A Wi-Fi network name is required";
+  else if (type === "vcard" && !String(content.name || "").trim()) return "A contact name is required";
+  else if (!["whatsapp", "wifi", "vcard"].includes(type) && !String(content.text || "").trim()) return "QR code content is required";
+  return null;
+}
+
+export async function GET() {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return NextResponse.json({ success: false, message: "Authentication required" }, { status: 401 });
+    await connectDB();
+    const qrCodes = await QRCode.find({ userId: user.userId }).sort({ createdAt: -1 }).lean();
+    return NextResponse.json({ success: true, qrCodes });
+  } catch (error) {
+    console.error("LIST QR ERROR:", error);
+    return NextResponse.json({ success: false, message: "Could not load QR codes" }, { status: 500 });
+  }
+}
+
 // Generate a unique short code
 async function generateUniqueShortCode() {
   let shortCode;
@@ -63,7 +89,7 @@ export async function POST(request) {
       );
     }
 
-    if (!type) {
+    if (!type || !supportedTypes.has(type)) {
       return NextResponse.json(
         {
           success: false,
@@ -82,54 +108,8 @@ export async function POST(request) {
         { status: 400 },
       );
     }
-    // Validate password if protection is enabled
-    if (content.passwordEnabled && !content.password?.trim()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Password is required when protection is enabled",
-        },
-        { status: 400 },
-      );
-    }
-
-    // --------------------------------
-    // 4. Website-specific validation
-    // --------------------------------
-
-    if (type === "website") {
-      if (!content.url || !content.url.trim()) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Website URL is required",
-          },
-          { status: 400 },
-        );
-      }
-
-      try {
-        const url = new URL(content.url);
-
-        if (!["http:", "https:"].includes(url.protocol)) {
-          return NextResponse.json(
-            {
-              success: false,
-              message: "Please provide a valid HTTP or HTTPS URL",
-            },
-            { status: 400 },
-          );
-        }
-      } catch (error) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Please provide a valid website URL",
-          },
-          { status: 400 },
-        );
-      }
-    }
+    const contentError = validateContent(type, content);
+    if (contentError) return NextResponse.json({ success: false, message: contentError }, { status: 400 });
 
     // --------------------------------
     // 5. Connect to MongoDB

@@ -114,9 +114,20 @@ export async function GET(request, { params }) {
     let destinationUrl = null;
 
 
-    if (qrCode.type === "website") {
-      destinationUrl = qrCode.content?.url;
+    if (["website", "pdf", "links", "business", "video", "images", "facebook", "instagram", "social", "menu", "mp3"].includes(qrCode.type)) destinationUrl = qrCode.content?.url;
+    if (qrCode.type === "whatsapp") {
+      const phone = String(qrCode.content?.phone || "").replace(/\D/g, "");
+      if (phone) destinationUrl = `https://wa.me/${phone}${qrCode.content?.message ? `?text=${encodeURIComponent(qrCode.content.message)}` : ""}`;
     }
+    if (qrCode.type === "wifi") {
+      const { ssid = "", password = "", encryption = "WPA" } = qrCode.content || {};
+      if (ssid) destinationUrl = `WIFI:T:${encryption};S:${String(ssid).replace(/;/g, "\\;")};P:${String(password).replace(/;/g, "\\;")};;`;
+    }
+    if (qrCode.type === "vcard") {
+      const { name = "", phone = "", email = "" } = qrCode.content || {};
+      if (name) destinationUrl = `data:text/vcard;charset=utf-8,${encodeURIComponent(`BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`)}`;
+    }
+    if (!destinationUrl && qrCode.content?.text) destinationUrl = `data:text/plain;charset=utf-8,${encodeURIComponent(qrCode.content.text)}`;
 
 
     // --------------------------------

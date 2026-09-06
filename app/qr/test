@@ -33,8 +33,8 @@ import {
 } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
-import WebsiteForm from "@/components/Qr/WebsiteForm";
 import QrDesignForm from "@/components/Qr/QrDesignForm";
+import QrContentForm from "@/components/Qr/QrContentForm";
 
 // ============================================================
 // QR TYPES
@@ -875,6 +875,7 @@ export default function Page() {
   const preview = qrTypes.find((item) => item.id === hoveredId) ?? selected;
 
   const currentData = qrData[selectedId] || {};
+  const designPreviewData = currentData.url || currentData.websiteUrl || currentData.text || (selectedId === "whatsapp" && currentData.phone ? `https://wa.me/${String(currentData.phone).replace(/\D/g, "")}` : "") || (selectedId === "wifi" && currentData.ssid ? `WIFI:T:${currentData.encryption || "WPA"};S:${currentData.ssid};P:${currentData.password || ""};;` : "") || (selectedId === "vcard" && currentData.name ? `BEGIN:VCARD\nFN:${currentData.name}\nEND:VCARD` : "");
 
   const updateQrData = (updater) => {
     setQrData((prev) => ({
@@ -899,22 +900,15 @@ export default function Page() {
 
   const isCurrentFormValid = () => {
     switch (selectedId) {
-      case "website": {
-        const { websiteUrl, passwordEnabled, password } = currentData;
-
-        if (!isValidUrl(websiteUrl)) return false;
-        if (passwordEnabled && !password?.trim()) return false;
-
-        return true;
-      }
-
-      default:
-        return true;
+      case "website": case "pdf": case "links": case "business": case "video": case "images": case "facebook": case "instagram": case "social": case "menu": case "mp3": return isValidUrl(currentData.url || currentData.websiteUrl || "");
+      case "whatsapp": return Boolean(String(currentData.phone || "").replace(/\D/g, ""));
+      case "wifi": return Boolean(currentData.ssid?.trim());
+      case "vcard": return Boolean(currentData.name?.trim());
+      default: return Boolean(currentData.text?.trim());
     }
   };
 
   const [isCreating, setIsCreating] = useState(false);
-  const [createdQr, setCreatedQr] = useState(null);
   const [createError, setCreateError] = useState("");
   const router = useRouter();
   const handleCreateQr = async () => {
@@ -932,11 +926,7 @@ export default function Page() {
 
         type: selectedId,
 
-        content: {
-          url: data.websiteUrl,
-          passwordEnabled: data.passwordEnabled || false,
-          password: data.passwordEnabled ? data.password : undefined,
-        },
+        content: Object.fromEntries(Object.entries(data).filter(([key, value]) => key !== "design" && key !== "qrName" && value !== undefined && value !== "")),
 
         design: {
           frame: design.selectedFrame || "scan",
@@ -985,13 +975,11 @@ export default function Page() {
 
       const result = await response.json();
 
-      router.push("/dashboard/qrcodes")
-
       if (!response.ok) {
         throw new Error(result.message || "Failed to create QR code");
       }
 
-      setCreatedQr(result.qrCode);
+      router.push("/dashboard/qrcodes");
     } catch (error) {
       console.error("CREATE QR ERROR:", error);
       setCreateError(error.message);
@@ -1030,7 +1018,7 @@ export default function Page() {
           TOP HEADER
       ====================================================== */}
 
-      <header className='sticky top-0 z-50 h-15.25 border-b border-gray-200 bg-white'>
+      <header className='sticky top-0 z-50 h-15.25 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur'>
         <div className='flex h-full items-center justify-between px-6 lg:px-10'>
           {/* Logo */}
           <div className='flex items-center gap-2'>
@@ -1119,7 +1107,7 @@ export default function Page() {
                         items-center
                         justify-center
                         overflow-hidden
-                        rounded-xl
+                        rounded-2xl
                         border
                         bg-white
                         px-4
@@ -1128,7 +1116,8 @@ export default function Page() {
                         transition-all
                         duration-300
                         ease-out
-
+                        hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-100/60
+                        ${isSelected ? "border-emerald-500 bg-emerald-50/50 shadow-md shadow-emerald-100" : "border-slate-200"}
                       `}
                     >
                       {/* Active top line */}
@@ -1137,8 +1126,7 @@ export default function Page() {
                           absolute left-0 right-0 top-0 h-1
                           
                           transition-transform duration-300
-                          group-hover:translate-y-0
-                          group-hover:bg-[#20c75a]
+                          ${isSelected ? "translate-y-0 bg-[#20c75a]" : "group-hover:translate-y-0 group-hover:bg-[#20c75a]"}
                          
                         `}
                       />
@@ -1256,9 +1244,7 @@ export default function Page() {
 
         {step === 2 && (
           <div>
-            {selected.id === "website" && (
-              <WebsiteForm value={currentData} onChange={updateQrData} />
-            )}
+            <QrContentForm type={selected.id} value={currentData} onChange={updateQrData} />
 
             {/* {selected.id === "vcard" && <VCardForm />}
 
@@ -1292,7 +1278,7 @@ export default function Page() {
 
         {step === 3 && (
           <QrDesignForm
-            url={selected.id === "website" ? currentData.websiteUrl : ""}
+            url={designPreviewData}
             value={currentData.design || {}}
             onChange={(newDesign) =>
               updateQrData((prev) => ({

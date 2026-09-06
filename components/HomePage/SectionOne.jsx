@@ -25,10 +25,7 @@ export default function HeroSection() {
           </div>
 
           {/* CTA */}
-          <Button className="mt-4 h-13 min-w-52 rounded-full bg-[#22c55e] px-6 text-base font-semibold text-white shadow-md shadow-green-200 transition-all hover:bg-[#16a34a] hover:shadow-lg sm:mt-5 sm:h-15 sm:min-w-60 sm:text-lg lg:mt-6 lg:h-18 lg:min-w-70 lg:px-6 lg:text-2xl">
-            <QrCode className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            Create QR code
-          </Button>
+          <Button className="mt-4 h-13 min-w-52 rounded-full bg-[#22c55e] px-6 text-base font-semibold text-white shadow-md shadow-green-200 transition-all hover:bg-[#16a34a] hover:shadow-lg sm:mt-5 sm:h-15 sm:min-w-60 sm:text-lg lg:mt-6 lg:h-18 lg:min-w-70 lg:px-6 lg:text-2xl"><QrCode className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />Create QR code</Button>
         </div>
 
         {/* Dashboard Preview */}

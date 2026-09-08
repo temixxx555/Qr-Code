@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, QrCode } from "lucide-react";
+import Link from "next/link";
 
 const scanningQuestions = [
   {
@@ -286,8 +287,24 @@ export default function Page() {
 
   return (
     <section className='w-full bg-[#f8f9fa] px-4 py-16 sm:px-6 sm:py-20 lg:px-8'>
+                 {/* Mobile header */}
+                  <div className="flex items-center justify-between border-b px-5 py-4 ">
+                    <Link href="/" className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                        <QrCode size={20} strokeWidth={2.3} />
+                      </div>
+        
+                      <div className="leading-tight">
+                        <p className="text-[14px] underline hover:text-blue-500 font-semibold text-slate-900">
+                          Home
+                        </p>
+                     
+                      </div>
+                    </Link>
+                  </div>
       <div className='mx-auto max-w-4xl'>
         {/* Header */}
+  
         <div className='mx-auto max-w-2xl text-center'>
           <h2 className='text-3xl font-bold tracking-tight text-[#101828] sm:text-4xl'>
             FAQs{" "}

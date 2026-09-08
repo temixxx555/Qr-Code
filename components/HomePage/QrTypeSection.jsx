@@ -644,9 +644,18 @@ export default function QRTypesSection() {
                 <button
                   key={type.id}
                   type="button"
-                  onClick={() => setActiveId(type.id)}
-                  aria-pressed={isActive}
-                  className={`flex h-30 w-full flex-col items-center justify-center gap-2 rounded-xl border bg-white text-center transition-all duration-200 sm:h-35 ${
+                     // DESKTOP
+                    onMouseEnter={() => setActiveId(type.id)}
+
+                    // MOBILE / TOUCH
+                    onClick={() => setActiveId(type.id)}
+
+                    // KEYBOARD ACCESSIBILITY
+                    onFocus={() => setActiveId(type.id)}
+
+                    aria-pressed={isActive}
+              
+                  className={` group flex h-30 w-full flex-col items-center justify-center gap-2 rounded-xl border bg-white text-center transition-all duration-200 sm:h-35 ${
                     isActive
                       ? "border-[#22c55e] ring-1 ring-[#22c55e]"
                       : "border-gray-200 hover:border-gray-300 hover:shadow-sm"

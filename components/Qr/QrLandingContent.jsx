@@ -35,7 +35,7 @@ const registry = {
 export default function QrLandingContent({ type, content }) {
   const Component = registry[type === "app" ? "apps" : type];
   return Component ? (
-    <div className="min-w-0 break-words [overflow-wrap:anywhere]">
+    <div className="min-w-0 h-screen break-words [overflow-wrap:anywhere]">
       <Component content={content || {}} />
     </div>
   ) : (

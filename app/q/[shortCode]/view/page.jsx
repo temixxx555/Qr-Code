@@ -17,7 +17,7 @@ export default async function Page({ params }) {
   const content = { ...qr.content };
   delete content.password;
   return (
-    <main className="mx-auto min-h-screen w-full max-w-lg bg-white shadow-sm">
+    <main className="mx-auto min-h-screen w-full max-w-lg  shadow-sm">
       <QrLandingContent
         type={qr.type}
         content={JSON.parse(JSON.stringify(content))}

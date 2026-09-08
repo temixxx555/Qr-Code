@@ -273,11 +273,5 @@ qrTypes.push(
     icon: Smartphone,
     description: "Help people find your app on their favorite store.",
   },
-  {
-    id: "coupon",
-    label: "Coupon",
-    title: "Coupon",
-    icon: FileText,
-    description: "Share an offer worth scanning.",
-  },
+
 );

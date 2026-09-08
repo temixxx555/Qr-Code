@@ -36,7 +36,7 @@ const registry = {
 export default function QrContentForm({ type, value, onChange }) {
   const Component = registry[type === "app" ? "apps" : type];
   return Component ? (
-    <div className="min-w-0 break-words [overflow-wrap:anywhere]">
+    <div className="min-w-0 wrap-break-word">
       <Component value={value} onChange={onChange} />
     </div>
   ) : (

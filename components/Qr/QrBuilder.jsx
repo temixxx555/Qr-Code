@@ -461,9 +461,9 @@ export default function QrBuilder({ id }) {
                 MOBILE / TABLET PREVIEW
                 ===================================================== */}
 
-            <div className="lg:hidden">
+            {/* <div className="lg:hidden">
               {preview}
-            </div>
+            </div> */}
 
           </div>
         )}

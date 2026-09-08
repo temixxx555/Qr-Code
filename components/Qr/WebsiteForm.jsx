@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-const WebsiteForm = ({ value, onChange }) => {
+const WebsiteForm = ({ value, onChange, embedded = false }) => {
   const {
     websiteUrl = "",
     qrName = "",
@@ -25,8 +25,8 @@ const WebsiteForm = ({ value, onChange }) => {
   } = value;
 
   const [openSections, setOpenSections] = useState({
-    website: true,
-    name: true,
+    website: false,
+    name: false,
     password: false,
   });
 
@@ -53,10 +53,7 @@ const WebsiteForm = ({ value, onChange }) => {
     try {
       const parsedUrl = new URL(url);
 
-      return (
-        parsedUrl.protocol === "http:" ||
-        parsedUrl.protocol === "https:"
-      );
+      return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
     } catch {
       return false;
     }
@@ -76,7 +73,13 @@ const WebsiteForm = ({ value, onChange }) => {
   };
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]">
+    <div
+      className={
+        embedded
+          ? ""
+          : "grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_430px]"
+      }
+    >
       {/* ======================================================
           LEFT — FORM
       ====================================================== */}
@@ -100,8 +103,7 @@ const WebsiteForm = ({ value, onChange }) => {
                 htmlFor="website-url"
                 className="mb-2 block text-sm font-medium text-[#475467]"
               >
-                Website URL{" "}
-                <span className="text-red-500">*</span>
+                Website URL <span className="text-red-500">*</span>
               </Label>
 
               <div className="relative">
@@ -109,9 +111,7 @@ const WebsiteForm = ({ value, onChange }) => {
                   id="website-url"
                   type="url"
                   value={websiteUrl}
-                  onChange={(e) =>
-                    updateField("websiteUrl", e.target.value)
-                  }
+                  onChange={(e) => updateField("websiteUrl", e.target.value)}
                   onBlur={() => setUrlTouched(true)}
                   placeholder="E.g. https://www.mywebsite.com/"
                   className={`h-11 bg-white pr-10 text-sm shadow-none placeholder:text-gray-400 focus-visible:ring-[#20c75a] ${
@@ -182,9 +182,7 @@ const WebsiteForm = ({ value, onChange }) => {
               <Input
                 id="qr-name"
                 value={qrName}
-                onChange={(e) =>
-                  updateField("qrName", e.target.value)
-                }
+                onChange={(e) => updateField("qrName", e.target.value)}
                 placeholder="E.g. My QR code"
                 className="h-11 border-gray-200 bg-white text-sm shadow-none placeholder:text-gray-400 focus-visible:ring-[#20c75a]"
               />
@@ -240,9 +238,7 @@ const WebsiteForm = ({ value, onChange }) => {
                   id="website-password"
                   type="password"
                   value={password}
-                  onChange={(e) =>
-                    updateField("password", e.target.value)
-                  }
+                  onChange={(e) => updateField("password", e.target.value)}
                   placeholder="Enter a password"
                   className="h-11 border-gray-200 bg-white focus-visible:ring-[#20c75a]"
                 />
@@ -250,7 +246,6 @@ const WebsiteForm = ({ value, onChange }) => {
             )}
           </div>
         </FormSection>
-
       </div>
 
       {/* ======================================================
@@ -258,7 +253,7 @@ const WebsiteForm = ({ value, onChange }) => {
       ====================================================== */}
 
       <div className="flex justify-center lg:sticky lg:top-[100px] lg:h-fit">
-        <WebsitePhonePreview websiteUrl={websiteUrl} />
+        {!embedded && <WebsitePhonePreview websiteUrl={websiteUrl} />}
       </div>
     </div>
   );
@@ -299,16 +294,12 @@ function FormSection({
               </h3>
 
               {required && (
-                <span className="text-sm font-semibold text-red-500">
-                  *
-                </span>
+                <span className="text-sm font-semibold text-red-500">*</span>
               )}
             </div>
 
             {description && (
-              <p className="mt-0.5 text-[11px] text-[#98a2b3]">
-                {description}
-              </p>
+              <p className="mt-0.5 text-[11px] text-[#98a2b3]">{description}</p>
             )}
           </div>
         </div>
@@ -334,8 +325,7 @@ function FormSection({
 ============================================================ */
 
 function WebsitePhonePreview({ websiteUrl }) {
-  const displayUrl =
-    websiteUrl || "https://online-qr-generator.com";
+  const displayUrl = websiteUrl || "https://online-qr-generator.com";
 
   return (
     <div className="relative">
@@ -616,9 +606,7 @@ function WebsitePhonePreview({ websiteUrl }) {
               {/* Actual URL */}
               {websiteUrl && (
                 <div className="mt-4 flex items-center justify-center gap-1 text-[8px] text-[#20c75a]">
-                  <span className="max-w-[150px] truncate">
-                    {displayUrl}
-                  </span>
+                  <span className="max-w-[150px] truncate">{displayUrl}</span>
 
                   <ExternalLink className="h-3 w-3 shrink-0" />
                 </div>

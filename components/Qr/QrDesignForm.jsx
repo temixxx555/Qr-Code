@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import api from "@/lib/axios";
+import QrFrame from "./QrFrame";
 import QRCodeStyling from "qr-code-styling";
 import {
   Frame,
@@ -257,30 +259,24 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
         };
 
   // upload image
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
-
-    // Maximum 1MB
     if (file.size > 1024 * 1024) {
-      alert("Logo must be less than 1MB.");
+      alert("Logo must be less than 1 MB.");
       return;
     }
-
-    // Only allow images
-    if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
-      return;
+    const body = new FormData();
+    body.append("file", file);
+    body.append("kind", "image");
+    try {
+      const { data } = await api.post("/uploads", body, {
+        headers: { "Content-Type": undefined },
+      });
+      setLogo(data.file.url);
+    } catch (error) {
+      alert(error.response?.data?.message || "Logo upload failed.");
     }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      setLogo(reader.result);
-    };
-
-    reader.readAsDataURL(file);
   };
   /* ============================================================
      CREATE QR
@@ -294,7 +290,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
       height: 190,
       type: "svg",
       data: url,
-      margin: 8,
+      margin: 12,
 
       qrOptions: {
         errorCorrectionLevel: "H",
@@ -326,7 +322,13 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
       },
     });
 
+    qrRef.current.replaceChildren();
     qrCodeRef.current.append(qrRef.current);
+    const host = qrRef.current;
+    return () => {
+      host.replaceChildren();
+      qrCodeRef.current = null;
+    };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -385,28 +387,28 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
     cornerDotColor,
   ]);
   return (
-    <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]'>
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]">
       {/* ======================================================
           LEFT SETTINGS
       ====================================================== */}
 
-      <div className='space-y-4'>
+      <div className="space-y-4">
         {/* ====================================================
             FRAME
         ==================================================== */}
 
         <DesignSection
           icon={Frame}
-          title='Frame'
-          description='Frames make your QR code stand out and inspire more scans.'
+          title="Frame"
+          description="Frames make your QR code stand out and inspire more scans."
           open={openSections.frame}
           onClick={() => toggleSection("frame")}
         >
-          <Label className='mb-3 block text-xs font-semibold text-gray-700'>
+          <Label className="mb-3 block text-xs font-semibold text-gray-700">
             Frame style
           </Label>
 
-          <div className='grid grid-cols-3 gap-3 sm:grid-cols-5'>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
             {frameStyles.map((frame) => (
               <StyleButton
                 key={frame.id}
@@ -415,28 +417,28 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
               >
                 <FramePreviewIcon type={frame.id} color={frameColor} />
 
-                <span className='mt-2 text-[9px] font-medium text-gray-500'>
+                <span className="mt-2 text-[9px] font-medium text-gray-500">
                   {frame.label}
                 </span>
               </StyleButton>
             ))}
           </div>
 
-          <div className='my-5 h-px bg-gray-100' />
+          <div className="my-5 h-px bg-gray-100" />
 
           {/* FRAME TEXT */}
 
           {selectedFrame !== "none" && (
-            <div className='mb-4'>
-              <Label className='mb-2 block text-xs font-medium text-gray-600'>
+            <div className="mb-4">
+              <Label className="mb-2 block text-xs font-medium text-gray-600">
                 Frame text
               </Label>
 
               <Input
                 value={frameText}
                 onChange={(e) => setFrameText(e.target.value)}
-                placeholder='Scan me!'
-                className='h-10 text-sm'
+                placeholder="Scan me!"
+                className="h-10 text-sm"
               />
             </div>
           )}
@@ -444,7 +446,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
           {/* FRAME COLOR */}
 
           <div>
-            <Label className='mb-2 block text-xs font-medium text-gray-600'>
+            <Label className="mb-2 block text-xs font-medium text-gray-600">
               Frame color
             </Label>
 
@@ -458,16 +460,16 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
         <DesignSection
           icon={Grid3X3}
-          title='QR Code Pattern'
-          description='Choose a pattern for your QR code and select colors.'
+          title="QR Code Pattern"
+          description="Choose a pattern for your QR code and select colors."
           open={openSections.pattern}
           onClick={() => toggleSection("pattern")}
         >
-          <Label className='mb-3 block text-xs font-semibold text-gray-700'>
+          <Label className="mb-3 block text-xs font-semibold text-gray-700">
             Pattern style
           </Label>
 
-          <div className='grid grid-cols-3 gap-3 sm:grid-cols-6'>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
             {patternStyles.map((pattern) => (
               <PatternButton
                 key={pattern.id}
@@ -479,26 +481,26 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
             ))}
           </div>
 
-          <div className='my-5 h-px bg-gray-100' />
+          <div className="my-5 h-px bg-gray-100" />
 
           {/* PATTERN COLOR */}
 
-          <div className='rounded-xl border border-gray-100 bg-[#f8fafc] p-4'>
-            <div className='flex items-center justify-between gap-3'>
-              <Label className='text-xs font-medium text-[#475467]'>
+          <div className="rounded-xl border border-gray-100 bg-[#f8fafc] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs font-medium text-[#475467]">
                 Use a gradient pattern color
               </Label>
 
               <Switch
                 checked={patternGradientEnabled}
                 onCheckedChange={setPatternGradientEnabled}
-                className='data-[state=checked]:bg-[#20c75a]'
+                className="data-[state=checked]:bg-[#20c75a]"
               />
             </div>
 
-            <div className='mt-4 flex flex-wrap items-end gap-3'>
+            <div className="mt-4 flex flex-wrap items-end gap-3">
               <div>
-                <Label className='mb-1.5 block text-[10px] text-gray-500'>
+                <Label className="mb-1.5 block text-[10px] text-gray-500">
                   Pattern color
                 </Label>
 
@@ -508,7 +510,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
               {patternGradientEnabled && (
                 <>
                   <button
-                    type='button'
+                    type="button"
                     onClick={() => {
                       const first = patternColor;
 
@@ -516,13 +518,13 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
                       setPatternColor2(first);
                     }}
-                    className='mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#20c75a] bg-white text-[#20c75a] transition hover:bg-[#effcf4]'
+                    className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#20c75a] bg-white text-[#20c75a] transition hover:bg-[#effcf4]"
                   >
-                    <ArrowLeftRight className='h-4 w-4' />
+                    <ArrowLeftRight className="h-4 w-4" />
                   </button>
 
                   <div>
-                    <Label className='mb-1.5 block text-[10px] text-gray-500'>
+                    <Label className="mb-1.5 block text-[10px] text-gray-500">
                       Second color
                     </Label>
 
@@ -538,38 +540,38 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
           {/* BACKGROUND */}
 
-          <div className='my-4 h-px bg-gray-100' />
+          <div className="my-4 h-px bg-gray-100" />
 
-          <div className='rounded-xl border border-gray-100 bg-[#f8fafc] p-4'>
-            <div className='flex items-center justify-between'>
-              <Label className='text-xs font-medium text-[#475467]'>
+          <div className="rounded-xl border border-gray-100 bg-[#f8fafc] p-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-[#475467]">
                 Transparent background
               </Label>
 
               <Switch
                 checked={transparentBackground}
                 onCheckedChange={setTransparentBackground}
-                className='data-[state=checked]:bg-[#20c75a]'
+                className="data-[state=checked]:bg-[#20c75a]"
               />
             </div>
 
             {!transparentBackground && (
               <>
-                <div className='mt-4 flex items-center justify-between'>
-                  <Label className='text-xs font-medium text-[#475467]'>
+                <div className="mt-4 flex items-center justify-between">
+                  <Label className="text-xs font-medium text-[#475467]">
                     Use a gradient background
                   </Label>
 
                   <Switch
                     checked={backgroundGradientEnabled}
                     onCheckedChange={setBackgroundGradientEnabled}
-                    className='data-[state=checked]:bg-[#20c75a]'
+                    className="data-[state=checked]:bg-[#20c75a]"
                   />
                 </div>
 
-                <div className='mt-4 flex flex-wrap items-end gap-3'>
+                <div className="mt-4 flex flex-wrap items-end gap-3">
                   <div>
-                    <Label className='mb-1.5 block text-[10px] text-gray-500'>
+                    <Label className="mb-1.5 block text-[10px] text-gray-500">
                       Background color
                     </Label>
 
@@ -582,7 +584,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
                   {backgroundGradientEnabled && (
                     <>
                       <button
-                        type='button'
+                        type="button"
                         onClick={() => {
                           const first = backgroundColor;
 
@@ -590,13 +592,13 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
                           setBackgroundColor2(first);
                         }}
-                        className='mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#20c75a] bg-white text-[#20c75a] transition hover:bg-[#effcf4]'
+                        className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#20c75a] bg-white text-[#20c75a] transition hover:bg-[#effcf4]"
                       >
-                        <ArrowLeftRight className='h-4 w-4' />
+                        <ArrowLeftRight className="h-4 w-4" />
                       </button>
 
                       <div>
-                        <Label className='mb-1.5 block text-[10px] text-gray-500'>
+                        <Label className="mb-1.5 block text-[10px] text-gray-500">
                           Second color
                         </Label>
 
@@ -612,8 +614,8 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
             )}
           </div>
 
-          <div className='mt-4 flex items-start gap-2 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500'>
-            <span className='flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px]'>
+          <div className="mt-4 flex items-start gap-2 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500">
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px]">
               !
             </span>
 
@@ -630,20 +632,20 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
         <DesignSection
           icon={SquareDashed}
-          title='QR Code Corners'
-          description='Customize the finder patterns of your QR code.'
+          title="QR Code Corners"
+          description="Customize the finder patterns of your QR code."
           open={openSections.corners}
           onClick={() => toggleSection("corners")}
         >
-          <div className='grid gap-6 md:grid-cols-2'>
+          <div className="grid gap-6 md:grid-cols-2">
             {/* CORNER SQUARE */}
 
             <div>
-              <Label className='mb-3 block text-xs font-semibold text-gray-700'>
+              <Label className="mb-3 block text-xs font-semibold text-gray-700">
                 Frame around corner dots style
               </Label>
 
-              <div className='grid grid-cols-3 gap-2'>
+              <div className="grid grid-cols-3 gap-2">
                 {cornerSquareStyles.map((corner) => (
                   <CornerButton
                     key={corner.id}
@@ -655,8 +657,8 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
                 ))}
               </div>
 
-              <div className='mt-4'>
-                <Label className='mb-2 block text-[11px] text-gray-500'>
+              <div className="mt-4">
+                <Label className="mb-2 block text-[11px] text-gray-500">
                   Corner frame color
                 </Label>
 
@@ -670,11 +672,11 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
             {/* CORNER DOT */}
 
             <div>
-              <Label className='mb-3 block text-xs font-semibold text-gray-700'>
+              <Label className="mb-3 block text-xs font-semibold text-gray-700">
                 Corner dots style
               </Label>
 
-              <div className='grid grid-cols-2 gap-2'>
+              <div className="grid grid-cols-2 gap-2">
                 {cornerDotStyles.map((corner) => (
                   <CornerDotButton
                     key={corner.id}
@@ -686,8 +688,8 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
                 ))}
               </div>
 
-              <div className='mt-4'>
-                <Label className='mb-2 block text-[11px] text-gray-500'>
+              <div className="mt-4">
+                <Label className="mb-2 block text-[11px] text-gray-500">
                   Corner dot color
                 </Label>
 
@@ -702,38 +704,38 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
         <DesignSection
           icon={ImagePlus}
-          title='Add Logo'
-          description='Make your QR code unique by adding a logo or image.'
+          title="Add Logo"
+          description="Make your QR code unique by adding a logo or image."
           open={openSections.image}
           onClick={() => toggleSection("image")}
         >
           <div>
-            <Label className='mb-3 block text-xs font-semibold text-gray-700'>
+            <Label className="mb-3 block text-xs font-semibold text-gray-700">
               Upload your logo
             </Label>
 
-            <div className='flex items-center gap-4'>
+            <div className="flex items-center gap-4">
               {/* Hidden file input */}
               <input
-                id='qr-logo-upload'
-                type='file'
-                accept='image/png,image/jpeg,image/webp,image/svg+xml'
+                id="qr-logo-upload"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
                 onChange={handleLogoUpload}
-                className='hidden'
+                className="hidden"
               />
 
               {/* Upload button */}
               <label
-                htmlFor='qr-logo-upload'
-                className='flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 transition hover:border-[#20c75a] hover:bg-[#effcf4]'
+                htmlFor="qr-logo-upload"
+                className="flex h-28 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 transition hover:border-[#20c75a] hover:bg-[#effcf4]"
               >
-                <ImagePlus className='mb-2 h-7 w-7 text-gray-400' />
+                <ImagePlus className="mb-2 h-7 w-7 text-gray-400" />
 
-                <span className='text-xs font-medium text-gray-600'>
+                <span className="text-xs font-medium text-gray-600">
                   {logo ? "Change logo" : "Click to upload"}
                 </span>
 
-                <span className='mt-1 text-[10px] text-gray-400'>
+                <span className="mt-1 text-[10px] text-gray-400">
                   PNG, JPG, WEBP or SVG · Max 1MB
                 </span>
               </label>
@@ -741,31 +743,31 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
 
             {/* Logo preview + remove */}
             {logo && (
-              <div className='mt-4 flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3'>
-                <div className='flex items-center gap-3'>
-                  <div className='flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 bg-white p-1'>
+              <div className="mt-4 flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-gray-200 bg-white p-1">
                     <img
                       src={logo}
-                      alt='QR logo preview'
-                      className='max-h-full max-w-full object-contain'
+                      alt="QR logo preview"
+                      className="max-h-full max-w-full object-contain"
                     />
                   </div>
 
                   <div>
-                    <p className='text-xs font-medium text-gray-700'>
+                    <p className="text-xs font-medium text-gray-700">
                       Logo added
                     </p>
 
-                    <p className='text-[10px] text-gray-400'>
+                    <p className="text-[10px] text-gray-400">
                       Your logo appears in the center of the QR code.
                     </p>
                   </div>
                 </div>
 
                 <button
-                  type='button'
+                  type="button"
                   onClick={() => setLogo("")}
-                  className='text-xs font-medium text-red-500 transition hover:text-red-600'
+                  className="text-xs font-medium text-red-500 transition hover:text-red-600"
                 >
                   Remove
                 </button>
@@ -779,7 +781,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
           PHONE PREVIEW
       ====================================================== */}
 
-      <div className='flex justify-center lg:sticky lg:top-25 lg:h-fit'>
+      <div className="flex justify-center lg:sticky lg:top-25 lg:h-fit">
         <QrPhonePreview
           qrRef={qrRef}
           frame={selectedFrame}
@@ -806,23 +808,23 @@ function DesignSection({
   children,
 }) {
   return (
-    <div className='overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm'>
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       <button
-        type='button'
+        type="button"
         onClick={onClick}
-        className='flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50'
+        className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50"
       >
-        <div className='flex items-center gap-3'>
-          <div className='flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8fafc] text-[#667085]'>
-            <Icon className='h-5 w-5' strokeWidth={1.8} />
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#f8fafc] text-[#667085]">
+            <Icon className="h-5 w-5" strokeWidth={1.8} />
           </div>
 
           <div>
-            <h3 className='text-[15px] font-semibold text-[#344054]'>
+            <h3 className="text-[15px] font-semibold text-[#344054]">
               {title}
             </h3>
 
-            <p className='mt-0.5 text-[11px] text-[#98a2b3]'>{description}</p>
+            <p className="mt-0.5 text-[11px] text-[#98a2b3]">{description}</p>
           </div>
         </div>
 
@@ -834,7 +836,7 @@ function DesignSection({
       </button>
 
       {open && (
-        <div className='border-t border-gray-200 px-4 pb-5 pt-4'>
+        <div className="border-t border-gray-200 px-4 pb-5 pt-4">
           {children}
         </div>
       )}
@@ -849,7 +851,7 @@ function DesignSection({
 function StyleButton({ active, onClick, children }) {
   return (
     <button
-      type='button'
+      type="button"
       onClick={onClick}
       className={`relative flex min-h-22 flex-col items-center justify-center rounded-xl border p-2 transition-all duration-200 ${
         active
@@ -858,8 +860,8 @@ function StyleButton({ active, onClick, children }) {
       }`}
     >
       {active && (
-        <div className='absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#20c75a]'>
-          <Check className='h-2.5 w-2.5 text-white' />
+        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#20c75a]">
+          <Check className="h-2.5 w-2.5 text-white" />
         </div>
       )}
 
@@ -875,7 +877,7 @@ function StyleButton({ active, onClick, children }) {
 function FramePreviewIcon({ type, color }) {
   if (type === "none") {
     return (
-      <div className='flex h-12 w-12 items-center justify-center'>
+      <div className="flex h-12 w-12 items-center justify-center">
         <Ban size={30} />
       </div>
     );
@@ -884,7 +886,7 @@ function FramePreviewIcon({ type, color }) {
   if (type === "simple") {
     return (
       <div
-        className='flex h-12 w-12 items-center justify-center rounded border-[3px] bg-white'
+        className="flex h-12 w-12 items-center justify-center rounded border-[3px] bg-white"
         style={{ borderColor: color }}
       >
         <QrCode size={30} />
@@ -894,13 +896,13 @@ function FramePreviewIcon({ type, color }) {
 
   if (type === "scan") {
     return (
-      <div className='flex h-12 w-12 flex-col overflow-hidden rounded bg-white shadow'>
-        <div className='flex flex-1 items-center justify-center'>
+      <div className="flex h-12 w-12 flex-col overflow-hidden rounded bg-white shadow">
+        <div className="flex flex-1 items-center justify-center">
           <QrCode size={30} />
         </div>
 
         <div
-          className='py-0.5 text-center text-[5px] font-bold text-white'
+          className="py-0.5 text-center text-[5px] font-bold text-white"
           style={{ backgroundColor: color }}
         >
           SCAN ME
@@ -911,13 +913,13 @@ function FramePreviewIcon({ type, color }) {
 
   if (type === "bottom") {
     return (
-      <div className='flex h-12 w-12 flex-col overflow-hidden rounded bg-white shadow'>
-        <div className='flex flex-1 items-center justify-center'>
+      <div className="flex h-12 w-12 flex-col overflow-hidden rounded bg-white shadow">
+        <div className="flex flex-1 items-center justify-center">
           <QrCode size={30} />
         </div>
 
         <div
-          className='h-3 text-white p-1 text-center text-[5px] '
+          className="h-3 text-white p-1 text-center text-[5px] "
           style={{ backgroundColor: color }}
         >
           {" "}
@@ -930,7 +932,7 @@ function FramePreviewIcon({ type, color }) {
   if (type === "rounded") {
     return (
       <div
-        className='flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] bg-white'
+        className="flex h-12 w-12 items-center justify-center rounded-2xl border-[3px] bg-white"
         style={{ borderColor: color }}
       >
         <QrCode size={30} />
@@ -941,15 +943,15 @@ function FramePreviewIcon({ type, color }) {
   if (type === "ticket") {
     return (
       <div
-        className='flex h-12 w-12 flex-col overflow-hidden rounded-lg border-[3px] bg-white'
+        className="flex h-12 w-12 flex-col overflow-hidden rounded-lg border-[3px] bg-white"
         style={{ borderColor: color }}
       >
-        <div className='flex flex-1 items-center justify-center'>
+        <div className="flex flex-1 items-center justify-center">
           <QrCode size={30} />
         </div>
 
         <div
-          className='border-t border-dashed py-0.5 text-center text-[5px]'
+          className="border-t border-dashed py-0.5 text-center text-[5px]"
           style={{
             borderColor: color,
             color,
@@ -963,9 +965,9 @@ function FramePreviewIcon({ type, color }) {
 
   if (type === "ribbon") {
     return (
-      <div className='relative flex h-12 w-12 items-center justify-center rounded bg-white shadow'>
+      <div className="relative flex h-12 w-12 items-center justify-center rounded bg-white shadow">
         <div
-          className='absolute -top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[5px] font-bold text-white'
+          className="absolute -top-1 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[5px] font-bold text-white"
           style={{ backgroundColor: color }}
         >
           SCAN
@@ -978,7 +980,7 @@ function FramePreviewIcon({ type, color }) {
   if (type === "badge") {
     return (
       <div
-        className='flex h-12 w-12 items-center justify-center rounded-full border-4 bg-white'
+        className="flex h-12 w-12 items-center justify-center rounded-full border-4 bg-white"
         style={{ borderColor: color }}
       >
         <QrCode size={30} />
@@ -989,7 +991,7 @@ function FramePreviewIcon({ type, color }) {
   if (type === "shadow") {
     return (
       <div
-        className='flex h-12 w-12 items-center justify-center rounded bg-white border'
+        className="flex h-12 w-12 items-center justify-center rounded bg-white border"
         style={{
           borderColor: color,
           boxShadow: `4px 4px 0 ${color}`,
@@ -1003,18 +1005,18 @@ function FramePreviewIcon({ type, color }) {
   if (type === "gift") {
     return (
       <div
-        className='relative flex h-12 w-12 items-center justify-center rounded bg-white border-[3px]'
+        className="relative flex h-12 w-12 items-center justify-center rounded bg-white border-[3px]"
         style={{ borderColor: color }}
       >
         <QrCode size={30} />
 
         <div
-          className='absolute left-1/2 top-0 h-full w-0.75 -translate-x-1/2'
+          className="absolute left-1/2 top-0 h-full w-0.75 -translate-x-1/2"
           style={{ backgroundColor: color }}
         />
 
         <div
-          className='absolute left-0 top-1/2 h-0.75 w-full -translate-y-1/2'
+          className="absolute left-0 top-1/2 h-0.75 w-full -translate-y-1/2"
           style={{ backgroundColor: color }}
         />
       </div>
@@ -1054,7 +1056,7 @@ function PatternButton({ active, onClick, type, label }) {
 
   return (
     <button
-      type='button'
+      type="button"
       onClick={onClick}
       className={`relative flex h-19.5 flex-col items-center justify-center gap-2 rounded-xl border transition-all ${
         active
@@ -1063,13 +1065,13 @@ function PatternButton({ active, onClick, type, label }) {
       }`}
     >
       {active && (
-        <div className='absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#20c75a]'>
-          <Check className='h-2.5 w-2.5 text-white' />
+        <div className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#20c75a]">
+          <Check className="h-2.5 w-2.5 text-white" />
         </div>
       )}
 
       <div
-        className='grid grid-cols-7 grid-rows-7 gap-0.5'
+        className="grid grid-cols-7 grid-rows-7 gap-0.5"
         style={{
           width: 34,
           height: 34,
@@ -1083,7 +1085,7 @@ function PatternButton({ active, onClick, type, label }) {
         ))}
       </div>
 
-      <span className='text-[9px] text-gray-500'>{label}</span>
+      <span className="text-[9px] text-gray-500">{label}</span>
     </button>
   );
 }
@@ -1102,7 +1104,7 @@ function CornerButton({ active, onClick, type, label }) {
 
   return (
     <button
-      type='button'
+      type="button"
       onClick={onClick}
       className={`flex h-22 flex-col items-center justify-center gap-2 rounded-xl border transition ${
         active
@@ -1116,7 +1118,7 @@ function CornerButton({ active, onClick, type, label }) {
         <div className={`h-4 w-4 bg-gray-900 ${shape}`} />
       </div>
 
-      <span className='text-[9px] text-gray-500'>{label}</span>
+      <span className="text-[9px] text-gray-500">{label}</span>
     </button>
   );
 }
@@ -1130,7 +1132,7 @@ function CornerDotButton({ active, onClick, type, label }) {
 
   return (
     <button
-      type='button'
+      type="button"
       onClick={onClick}
       className={`flex h-22 flex-col items-center justify-center gap-2 rounded-xl border transition ${
         active
@@ -1138,11 +1140,11 @@ function CornerDotButton({ active, onClick, type, label }) {
           : "border-gray-200 bg-white hover:border-[#20c75a]/50"
       }`}
     >
-      <div className='flex h-10 w-10 items-center justify-center border-[5px] border-gray-900'>
+      <div className="flex h-10 w-10 items-center justify-center border-[5px] border-gray-900">
         <div className={`h-5 w-5 bg-gray-900 ${shape}`} />
       </div>
 
-      <span className='text-[9px] text-gray-500'>{label}</span>
+      <span className="text-[9px] text-gray-500">{label}</span>
     </button>
   );
 }
@@ -1153,20 +1155,20 @@ function CornerDotButton({ active, onClick, type, label }) {
 
 function ColorPicker({ value, onChange }) {
   return (
-    <div className='flex items-center gap-2'>
-      <div className='relative'>
+    <div className="flex items-center gap-2">
+      <div className="relative">
         <input
-          type='color'
+          type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className='h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-white p-1'
+          className="h-10 w-10 cursor-pointer rounded-lg border border-gray-200 bg-white p-1"
         />
       </div>
 
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className='h-10 w-27.5 text-xs uppercase'
+        className="h-10 w-27.5 text-xs uppercase"
       />
     </div>
   );
@@ -1178,20 +1180,20 @@ function ColorPicker({ value, onChange }) {
 
 function QrPhonePreview({ qrRef, frame, frameColor, frameText }) {
   return (
-    <div className='relative'>
+    <div className="relative">
       {/* TOP TOGGLE */}
 
-      <div className='absolute -top-10 right-0 flex overflow-hidden rounded-full border border-[#20c75a] bg-white p-0.5 shadow-sm'>
+      <div className="absolute -top-10 right-0 flex overflow-hidden rounded-full border border-[#20c75a] bg-white p-0.5 shadow-sm">
         <button
-          type='button'
-          className='px-5 py-1.5 text-xs font-semibold text-gray-400'
+          type="button"
+          className="px-5 py-1.5 text-xs font-semibold text-gray-400"
         >
           Preview
         </button>
 
         <button
-          type='button'
-          className='rounded-full bg-[#20c75a] px-5 py-1.5 text-xs font-semibold text-white'
+          type="button"
+          className="rounded-full bg-[#20c75a] px-5 py-1.5 text-xs font-semibold text-white"
         >
           QR code
         </button>
@@ -1211,34 +1213,34 @@ function QrPhonePreview({ qrRef, frame, frameColor, frameText }) {
         ].join(" ")}
       >
         {/* subtle metallic edge */}
-        <div className='pointer-events-none absolute -inset-0.5 rounded-[49px] border border-white/20' />
+        <div className="pointer-events-none absolute -inset-0.5 rounded-[49px] border border-white/20" />
 
         {/* SIDE BUTTONS */}
-        <div className='absolute -left-2 top-26.25 h-7 w-0.75 rounded-l-full bg-[#3b3b3b]' />
-        <div className='absolute -left-2 top-35.5 h-11.5 w-0.75 rounded-l-full bg-[#3b3b3b]' />
+        <div className="absolute -left-2 top-26.25 h-7 w-0.75 rounded-l-full bg-[#3b3b3b]" />
+        <div className="absolute -left-2 top-35.5 h-11.5 w-0.75 rounded-l-full bg-[#3b3b3b]" />
 
-        <div className='absolute -right-2 top-32.5 h-13.75 w-0.75 rounded-r-full bg-[#3b3b3b]' />
+        <div className="absolute -right-2 top-32.5 h-13.75 w-0.75 rounded-r-full bg-[#3b3b3b]" />
 
         {/* SCREEN */}
-        <div className='relative flex h-full w-full flex-col items-center overflow-hidden rounded-[40px] bg-white'>
+        <div className="relative flex h-full w-full flex-col items-center overflow-hidden rounded-[40px] bg-white">
           {/* Dynamic island */}
-          <div className='absolute left-1/2 top-3 z-30 h-5.5 w-19.5 -translate-x-1/2 rounded-full bg-black'>
-            <div className='absolute right-2.25 top-1/2 h-1.25 w-1.25 -translate-y-1/2 rounded-full bg-[#172554]' />
+          <div className="absolute left-1/2 top-3 z-30 h-5.5 w-19.5 -translate-x-1/2 rounded-full bg-black">
+            <div className="absolute right-2.25 top-1/2 h-1.25 w-1.25 -translate-y-1/2 rounded-full bg-[#172554]" />
           </div>
 
           {/* Status bar */}
-          <div className='absolute inset-x-0 top-3.5 z-20 flex items-center justify-between px-6.75 text-[8px] font-bold text-black'>
+          <div className="absolute inset-x-0 top-3.5 z-20 flex items-center justify-between px-6.75 text-[8px] font-bold text-black">
             <span>9:41</span>
 
-            <div className='flex items-center gap-1'>
-              <span className='text-[7px] '>▰</span>
-              <span className='text-[8px]'>◒</span>
-              <span className='text-[9px]'>▰</span>
+            <div className="flex items-center gap-1">
+              <span className="text-[7px] ">▰</span>
+              <span className="text-[8px]">◒</span>
+              <span className="text-[9px]">▰</span>
             </div>
           </div>
 
           {/* Preview area */}
-          <div className='flex h-full w-50 items-center justify-center px-5 pb-8 pt-1'>
+          <div className="flex h-full w-50 items-center justify-center px-5 pb-8 pt-1">
             <QrFrame
               frame={frame}
               frameColor={frameColor}
@@ -1248,7 +1250,7 @@ function QrPhonePreview({ qrRef, frame, frameColor, frameText }) {
           </div>
 
           {/* Home indicator */}
-          <div className='absolute bottom-2.25 left-1/2 h-1 w-21.5 -translate-x-1/2 rounded-full bg-black' />
+          <div className="absolute bottom-2.25 left-1/2 h-1 w-21.5 -translate-x-1/2 rounded-full bg-black" />
         </div>
       </div>
     </div>
@@ -1262,132 +1264,3 @@ function QrPhonePreview({ qrRef, frame, frameColor, frameText }) {
    qrRef stays in the same DOM structure.
    This means changing the frame will NOT destroy the QR.
 ============================================================ */
-
-function QrFrame({ frame, frameColor, frameText, qrRef }) {
-  const hasText =
-    frame !== "none" &&
-    frame !== "simple" &&
-    frame !== "rounded" &&
-    frame !== "shadow";
-
-  const frameClasses = {
-    none: "",
-
-    simple: "border-[5px] rounded-lg",
-
-    scan: "border-[5px] rounded-lg overflow-hidden",
-
-    bottom: "rounded-lg overflow-hidden shadow-lg",
-
-    rounded: "border-[7px] rounded-[28px]",
-
-    ticket: "border-[5px] rounded-xl overflow-hidden",
-
-    ribbon: "rounded-xl overflow-visible shadow-lg",
-
-    badge: "border-[6px] rounded-[32px] overflow-hidden",
-
-    shadow: "border-[4px] rounded-lg",
-
-    gift: "border-[5px] rounded-xl overflow-hidden",
-  };
-
-  const getWrapperStyle = () => {
-    if (
-      frame === "simple" ||
-      frame === "scan" ||
-      frame === "rounded" ||
-      frame === "ticket" ||
-      frame === "badge" ||
-      frame === "gift" ||
-      frame === "shadow"
-    ) {
-      return {
-        borderColor: frameColor,
-      };
-    }
-
-    if (frame === "shadow") {
-      return {
-        borderColor: frameColor,
-        boxShadow: `7px 7px 0 ${frameColor}`,
-      };
-    }
-
-    return {};
-  };
-
-  return (
-    <div className='relative mt-8 p-5'>
-      {/* RIBBON DECORATION */}
-
-      {frame === "ribbon" && (
-        <div
-          className='absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded px-5 py-2 text-[11px] font-bold text-white shadow'
-          style={{
-            backgroundColor: frameColor,
-          }}
-        >
-          {frameText || "SCAN ME"}
-        </div>
-      )}
-
-      {/* QR CONTAINER */}
-
-      <div
-        className={`relative bg-white ${frameClasses[frame]}`}
-        style={getWrapperStyle()}
-      >
-        {/* GIFT STYLE */}
-
-        {frame === "gift" && (
-          <>
-            <div
-              className='absolute left-1/2 top-0 z-10 h-full w-1.25 -translate-x-1/2'
-              style={{
-                backgroundColor: frameColor,
-              }}
-            />
-
-            <div
-              className='absolute left-0 top-1/2 z-10 h-1.25 w-full -translate-y-1/2'
-              style={{
-                backgroundColor: frameColor,
-              }}
-            />
-          </>
-        )}
-
-        {/* QR */}
-
-        <div className='relative z-20 p-3'>
-          <div ref={qrRef} />
-        </div>
-
-        {/* TEXT AREA */}
-
-        {hasText && frame !== "ribbon" && (
-          <div
-            className={`relative z-20 px-4 py-3 text-center text-sm font-bold ${
-              frame === "ticket"
-                ? "border-t border-dashed bg-white"
-                : "text-white"
-            }`}
-            style={
-              frame === "ticket"
-                ? {
-                    color: frameColor,
-                    borderColor: frameColor,
-                  }
-                : {
-                    backgroundColor: frameColor,
-                  }
-            }
-          >
-            {frameText || "Scan me!"}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const ScanSchema = new mongoose.Schema(
   {
+    visitorId: { type: String, index: true },
+    deviceType: String,
+    os: String,
+    browser: String,
+    country: String,
     // Which QR code was scanned
     qrCodeId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -37,11 +42,9 @@ const ScanSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const Scan =
-  mongoose.models.Scan ||
-  mongoose.model("Scan", ScanSchema);
+const Scan = mongoose.models.Scan || mongoose.model("Scan", ScanSchema);
 
 export default Scan;

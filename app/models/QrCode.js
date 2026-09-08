@@ -36,6 +36,8 @@ const QRCodeSchema = new mongoose.Schema(
         "menu",
         "business",
         "app",
+        "apps",
+        "coupon",
         "links",
         "video",
         "images",
@@ -144,6 +146,14 @@ const QRCodeSchema = new mongoose.Schema(
       },
     },
 
+    folderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Folder",
+      default: null,
+    },
+    passwordHash: { type: String, select: false },
+    uniqueScanCount: { type: Number, default: 0 },
+    publicOrigin: { type: String },
     scanCount: {
       type: Number,
       default: 0,
@@ -152,17 +162,16 @@ const QRCodeSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "inactive"],
+      enum: ["active", "inactive", "paused", "archived"],
       default: "active",
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const QRCode =
-  mongoose.models.QRCode || mongoose.model("QRCode", QRCodeSchema);
+const QRCode = mongoose.models.QRCode || mongoose.model("QRCode", QRCodeSchema);
 
 //   // Replace with:
 // delete mongoose.models["QRCode"];

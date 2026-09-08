@@ -72,9 +72,7 @@ export default function Sidebar() {
 
             <div className="leading-tight">
               <p className="text-sm font-medium text-gray-500">Online</p>
-              <h2 className="text-[16px] font-bold text-black">
-                QR Generator
-              </h2>
+              <h2 className="text-[16px] font-bold text-black">QR Generator</h2>
             </div>
           </div>
         </div>
@@ -85,8 +83,7 @@ export default function Sidebar() {
             const Icon = item.icon;
 
             const isActive =
-              pathname === item.href ||
-              pathname.startsWith(`${item.href}/`);
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
@@ -122,8 +119,7 @@ export default function Sidebar() {
             const Icon = item.icon;
 
             const isActive =
-              pathname === item.href ||
-              pathname.startsWith(`${item.href}/`);
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <Link
@@ -156,10 +152,15 @@ export default function Sidebar() {
         <div className="rounded-2xl bg-emerald-50 p-5">
           <div className="mb-5 flex items-center gap-3 text-gray-700">
             <Clock3 size={20} />
-            <span className="text-[16px] font-medium">9 days remaining</span>
+            <span className="text-[16px] font-medium">Your QR workspace</span>
           </div>
 
-          <button className="w-full rounded-xl bg-emerald-500 py-3 text-[16px] font-semibold text-white transition hover:bg-emerald-600">Upgrade</button>
+          <Link
+            href="/qr"
+            className="block w-full rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-white hover:bg-emerald-600"
+          >
+            Create QR code
+          </Link>
         </div>
       </div>
     </aside>

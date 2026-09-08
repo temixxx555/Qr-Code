@@ -1,20 +1,395 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import QRCodeStyling from "qr-code-styling";
-import { Download, ExternalLink, Pencil, Power, Plus, QrCode, Trash2 } from "lucide-react";
 import api from "@/lib/axios";
-
-export default function QrCodesPage() {
-  const [codes, setCodes] = useState([]); const [loading, setLoading] = useState(true); const [query, setQuery] = useState(""); const [status, setStatus] = useState("all"); const [error, setError] = useState("");
-  useEffect(() => { let active = true; api.get("/qr").then(({ data }) => { if (active) setCodes(data.qrCodes || []); }).catch((err) => { if (active) setError(err.response?.data?.message || "Could not load your QR codes."); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, []);
-  const visibleCodes = useMemo(() => codes.filter((code) => (status === "all" || code.status === status) && `${code.name} ${code.type}`.toLowerCase().includes(query.toLowerCase())), [codes, query, status]);
-  const update = async (code, patch) => { try { const { data } = await api.patch(`/qr/${code._id}`, patch); setCodes((current) => current.map((item) => item._id === code._id ? data.qrCode : item)); } catch (err) { setError(err.response?.data?.message || "Could not update this QR code."); } };
-  const remove = async (code) => { if (!window.confirm(`Delete “${code.name}”? This cannot be undone.`)) return; try { await api.delete(`/qr/${code._id}`); setCodes((current) => current.filter((item) => item._id !== code._id)); } catch { setError("Could not delete this QR code."); } };
-  const download = (code) => { const style = code.design || {}; const qr = new QRCodeStyling({ width: 1000, height: 1000, type: "png", data: `${window.location.origin}/r/${code.shortCode}`, dotsOptions: { color: style.patternColor || "#000", type: style.pattern === "dots" ? "dots" : "square" }, backgroundOptions: { color: style.transparentBackground ? "transparent" : style.backgroundColor || "#fff" }, image: style.logo || undefined, imageOptions: { crossOrigin: "anonymous", margin: 12 } }); qr.download({ name: code.name.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "qr-code", extension: "png" }); };
-  return <div className="mx-auto max-w-6xl space-y-7"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-emerald-600">Dashboard</p><h1 className="text-3xl font-bold text-slate-900">My QR Codes</h1><p className="mt-1 text-slate-500">Create, download, update, or pause your dynamic QR codes.</p></div><Link href="/qr" className="inline-flex items-center gap-2 rounded-xl bg-[#20c75a] px-5 py-3 font-semibold text-white hover:bg-emerald-600"><Plus size={18} /> Create QR code</Link></div>
-    <div className="flex flex-wrap gap-3 rounded-2xl border bg-white p-4 shadow-sm"><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search QR codes…" className="h-11 min-w-56 flex-1 rounded-lg border px-3 outline-none focus:border-emerald-500" /><select value={status} onChange={(event) => setStatus(event.target.value)} className="h-11 rounded-lg border bg-white px-3"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Paused</option></select></div>
-    {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    {loading ? <p className="py-20 text-center text-slate-500">Loading your QR codes…</p> : visibleCodes.length ? <div className="grid gap-4 md:grid-cols-2">{visibleCodes.map((code) => <article key={code._id} className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex justify-between gap-3"><div><span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold capitalize text-emerald-700">{code.type}</span><h2 className="mt-3 font-semibold text-slate-900">{code.name}</h2><a href={`/r/${code.shortCode}`} target="_blank" className="mt-1 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-emerald-600">/r/{code.shortCode}<ExternalLink size={13} /></a></div><span className={`h-fit rounded-full px-2.5 py-1 text-xs font-semibold ${code.status === "active" ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-600"}`}>{code.status}</span></div><div className="mt-5 flex items-center justify-between border-t pt-4 text-sm text-slate-500"><span>{code.scanCount || 0} scans</span><span>{new Date(code.createdAt).toLocaleDateString()}</span></div><div className="mt-4 flex flex-wrap gap-2"><button onClick={() => download(code)} className="action"><Download size={16} /> Download</button><button onClick={() => update(code, { status: code.status === "active" ? "inactive" : "active" })} className="action"><Power size={16} /> {code.status === "active" ? "Pause" : "Activate"}</button>{code.content?.url && <button onClick={() => { const next = window.prompt("New destination URL", code.content.url); if (next) update(code, { content: { url: next } }); }} className="action"><Pencil size={16} /> Edit link</button>}<button onClick={() => remove(code)} className="action text-red-600 hover:border-red-200 hover:bg-red-50"><Trash2 size={16} /> Delete</button></div></article>)}</div> : <div className="rounded-2xl border border-dashed bg-white px-6 py-20 text-center"><QrCode className="mx-auto mb-4 text-emerald-500" size={42} /><h2 className="text-xl font-semibold text-slate-900">No QR codes yet</h2><p className="mt-2 text-slate-500">Your first dynamic QR code is only a minute away.</p><Link href="/qr" className="mt-5 inline-block font-semibold text-emerald-600">Create a QR code →</Link></div>}</div>;
+import QrGraphic from "@/components/Qr/QrGraphic";
+import FolderManager from "@/components/Qr/FolderManager";
+import { QR_TYPES, typeLabel, wifiPayload } from "@/lib/qr-content";
+import { downloadQr } from "@/lib/download-qr";
+export default function Page() {
+  const [codes, setCodes] = useState([]),
+    [folders, setFolders] = useState([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [query, setQuery] = useState(""),
+    [status, setStatus] = useState("all"),
+    [type, setType] = useState("all"),
+    [folder, setFolder] = useState("all"),
+    [sort, setSort] = useState("newest"),
+    [page, setPage] = useState(1),
+    [busy, setBusy] = useState("");
+  useEffect(() => {
+    let alive = true;
+    Promise.all([api.get("/qr"), api.get("/folders")])
+      .then(([q, f]) => {
+        if (alive) {
+          setCodes(q.data.qrCodes);
+          setFolders(f.data.folders);
+        }
+      })
+      .catch(() => {
+        if (alive)
+          setError("Could not load your QR workspace. Please refresh.");
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const visible = useMemo(
+    () =>
+      codes
+        .filter(
+          (c) =>
+            (status === "all" ||
+              c.status === status ||
+              (status === "paused" && c.status === "inactive")) &&
+            (type === "all" || c.type === type) &&
+            (folder === "all" || (c.folderId || "") === folder) &&
+            (c.name + " " + c.type).toLowerCase().includes(query.toLowerCase()),
+        )
+        .sort((a, b) =>
+          sort === "scans"
+            ? (b.scanCount || 0) - (a.scanCount || 0)
+            : sort === "name"
+              ? a.name.localeCompare(b.name)
+              : sort === "updated"
+                ? new Date(b.updatedAt) - new Date(a.updatedAt)
+                : new Date(b.createdAt) - new Date(a.createdAt),
+        ),
+    [codes, status, type, folder, query, sort],
+  );
+  const currentPage = Math.min(
+    page,
+    Math.max(1, Math.ceil(visible.length / 12)),
+  );
+  const dataFor = (c) =>
+    c.type === "wifi"
+      ? wifiPayload(c.content)
+      : new URL(c.qrUrl || "/q/" + c.shortCode, window.location.origin).href;
+  async function action(c, work) {
+    if (busy) return;
+    setBusy(c._id);
+    setError("");
+    try {
+      await work();
+    } catch (e) {
+      setError(
+        e.response?.data?.message || e.message || "Action failed. Try again.",
+      );
+    } finally {
+      setBusy("");
+    }
+  }
+  async function update(c, body) {
+    const { data } = await api.patch("/qr/" + c._id, body);
+    setCodes((prev) => prev.map((q) => (q._id === c._id ? data.qrCode : q)));
+  }
+  return (
+    <main className="mx-auto max-w-6xl space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm text-emerald-600">Your workspace</p>
+          <h1 className="text-3xl font-bold">My QR Codes</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Update what you share. Keep the QR you printed.
+          </p>
+        </div>
+        <Link
+          href="/qr"
+          className="rounded-xl bg-[#20c75a] px-5 py-3 font-semibold text-white"
+        >
+          + Create QR code
+        </Link>
+      </div>
+      <FolderManager folders={folders} onChange={setFolders} />
+      <div className="flex flex-wrap gap-3 rounded-xl border bg-white p-4">
+        <input
+          aria-label="Search QR codes"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search QR codes…"
+          className="h-10 min-w-40 flex-1 rounded-lg border px-3"
+        />
+        {[
+          [
+            "Status",
+            status,
+            setStatus,
+            [
+              ["all", "All statuses"],
+              ["active", "Active"],
+              ["paused", "Paused"],
+              ["archived", "Archived"],
+            ],
+          ],
+          [
+            "Type",
+            type,
+            setType,
+            [["all", "All types"], ...QR_TYPES.map((t) => [t, typeLabel(t)])],
+          ],
+          [
+            "Folder",
+            folder,
+            setFolder,
+            [
+              ["all", "All folders"],
+              ["", "No folder"],
+              ...folders.map((f) => [f._id, f.name]),
+            ],
+          ],
+          [
+            "Sort",
+            sort,
+            setSort,
+            [
+              ["newest", "Newest"],
+              ["updated", "Last updated"],
+              ["scans", "Most scans"],
+              ["name", "Name"],
+            ],
+          ],
+        ].map(([label, value, setter, options]) => (
+          <select
+            key={label}
+            aria-label={label}
+            className="rounded-lg border p-2 text-sm"
+            value={value}
+            onChange={(e) => {
+              setter(e.target.value);
+              setPage(1);
+            }}
+          >
+            {options.map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+        ))}
+      </div>
+      {error && (
+        <p
+          role="alert"
+          className="rounded-xl bg-red-50 p-4 text-sm text-red-700"
+        >
+          {error}
+        </p>
+      )}
+      {loading ? (
+        <p className="py-20 text-center">Loading QR codes…</p>
+      ) : visible.length ? (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {visible.slice((currentPage - 1) * 12, currentPage * 12).map((c) => (
+            <article
+              key={c._id}
+              className="rounded-2xl border bg-white p-5 shadow-sm"
+            >
+              <div className="flex gap-3">
+                <div className="hidden shrink-0 sm:block">
+                  <QrGraphic data={dataFor(c)} design={c.design} size={100} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-semibold text-emerald-600">
+                    {typeLabel(c.type)}
+                  </span>
+                  <h2 className="mt-1 break-words text-lg font-bold">
+                    {c.name}
+                  </h2>
+                  <p className="mt-2 truncate text-xs text-slate-500">
+                    {c.content?.websiteUrl ||
+                      c.content?.url ||
+                      c.content?.title ||
+                      c.content?.name ||
+                      c.content?.ssid ||
+                      "Hosted landing page"}
+                  </p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    {folders.find((f) => f._id === c.folderId)?.name ||
+                      "No folder"}{" "}
+                    · {c.status === "inactive" ? "Paused" : c.status}
+                  </p>
+                  <p className="mt-3 text-xs">
+                    {c.type === "wifi"
+                      ? "Static WiFi code"
+                      : (c.scanCount || 0) + " scans"}
+                  </p>
+                </div>
+              </div>
+              <div className="my-3 flex justify-between gap-2 border-t pt-3 text-[11px] text-slate-400">
+                <span>
+                  Created {new Date(c.createdAt).toLocaleDateString()}
+                </span>
+                <span>
+                  Updated {new Date(c.updatedAt).toLocaleDateString()}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={"/q/" + c.shortCode}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action"
+                >
+                  View
+                </a>
+                <Link
+                  href={"/dashboard/qrcodes/" + c._id + "/edit"}
+                  className="action"
+                >
+                  Edit content / design
+                </Link>
+                {c.type !== "wifi" && (
+                  <Link
+                    href={"/dashboard/qrcodes/" + c._id + "/analytics"}
+                    className="action"
+                  >
+                    Analytics
+                  </Link>
+                )}
+                <button
+                  disabled={!!busy}
+                  className="action"
+                  onClick={() =>
+                    action(c, () =>
+                      downloadQr({
+                        data: dataFor(c),
+                        design: c.design,
+                        name: c.name,
+                      }),
+                    )
+                  }
+                >
+                  Download PNG
+                </button>
+                <button
+                  disabled={!!busy}
+                  className="action"
+                  onClick={() =>
+                    action(c, () =>
+                      update(c, {
+                        status: c.status === "active" ? "paused" : "active",
+                      }),
+                    )
+                  }
+                >
+                  {c.status === "active" ? "Pause" : "Activate"}
+                </button>
+                <button
+                  disabled={!!busy || c.content?.passwordEnabled}
+                  title={
+                    c.content?.passwordEnabled
+                      ? "Remove password protection before duplicating"
+                      : ""
+                  }
+                  className="action"
+                  onClick={() =>
+                    action(c, async () => {
+                      const { data } = await api.post("/qr", {
+                        name: (c.name + " copy").slice(0, 100),
+                        type: c.type,
+                        content: c.content,
+                        design: c.design,
+                        folderId: c.folderId,
+                      });
+                      setCodes((prev) => [data.qrCode, ...prev]);
+                    })
+                  }
+                >
+                  Duplicate
+                </button>
+                <button
+                  disabled={!!busy}
+                  className="action"
+                  onClick={() =>
+                    action(c, () => update(c, { status: "archived" }))
+                  }
+                >
+                  Archive
+                </button>
+                <button
+                  disabled={!!busy}
+                  className="action"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Permanently delete " +
+                          c.name +
+                          "? Printed QR codes will stop working.",
+                      )
+                    )
+                      action(c, async () => {
+                        await api.delete("/qr/" + c._id);
+                        setCodes((prev) => prev.filter((q) => q._id !== c._id));
+                      });
+                  }}
+                >
+                  Delete
+                </button>
+                <select
+                  disabled={!!busy}
+                  aria-label={"Move " + c.name + " to folder"}
+                  value={c.folderId || ""}
+                  onChange={(e) =>
+                    action(c, () => update(c, { folderId: e.target.value }))
+                  }
+                  className="rounded-lg border p-2 text-xs"
+                >
+                  <option value="">No folder</option>
+                  {folders.map((f) => (
+                    <option key={f._id} value={f._id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {busy === c._id && (
+                <p role="status" className="mt-2 text-xs text-emerald-600">
+                  Working…
+                </p>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed p-16 text-center">
+          <h2 className="text-xl font-semibold">
+            {codes.length
+              ? "No matching QR codes"
+              : "Your QR collection starts here"}
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            {codes.length
+              ? "Try another search or filter."
+              : "Create your first QR and share something useful."}
+          </p>
+        </div>
+      )}
+      <div className="flex items-center justify-center gap-4 text-sm">
+        <button
+          disabled={currentPage === 1}
+          className="action disabled:opacity-30"
+          onClick={() => setPage(currentPage - 1)}
+        >
+          Previous
+        </button>
+        <span>
+          {currentPage} / {Math.max(1, Math.ceil(visible.length / 12))}
+        </span>
+        <button
+          disabled={currentPage * 12 >= visible.length}
+          className="action disabled:opacity-30"
+          onClick={() => setPage(currentPage + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </main>
+  );
 }

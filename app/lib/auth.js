@@ -13,6 +13,11 @@ export async function getAuthenticatedUser() {
   try {
     const decoded = verifyAccessToken(accessToken);
 
+    if (
+      typeof decoded.userId !== "string" ||
+      !/^[a-f0-9]{24}$/i.test(decoded.userId)
+    )
+      return null;
     return decoded;
   } catch (error) {
     return null;

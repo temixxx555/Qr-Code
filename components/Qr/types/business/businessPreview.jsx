@@ -13,6 +13,7 @@ import {
 
 import { Picture, Intro, Action } from "../presentation";
 import { safeUrl } from "@/lib/qr-content";
+import Link from "next/link";
 
 export default function BusinessPreview({ content: c }) {
   const phone = c.phone
@@ -341,12 +342,14 @@ export default function BusinessPreview({ content: c }) {
           </section>
 
           {/* FOOTER */}
+          <Link href={"/"}>
           <p className="mt-5 text-center text-[9px] font-medium text-slate-400">
             Powered by{" "}
             <span className="font-semibold text-slate-500">
-              Online QR Generator
+               Smart QR 
             </span>
           </p>
+          </Link>
         </div>
       </div>
     </article>

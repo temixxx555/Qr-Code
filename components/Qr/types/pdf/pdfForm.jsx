@@ -149,7 +149,7 @@ export default function Form({ value = {}, onChange }) {
           fields={[
             ["title", "Document title"],
             ["description", "Description", "textarea"],
-            ["ctaLabel", "Button label"],
+            ,
           ]}
         />
       </Section>

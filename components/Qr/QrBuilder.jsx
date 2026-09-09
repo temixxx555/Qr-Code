@@ -250,7 +250,7 @@ export default function QrBuilder({ id }) {
             href="/dashboard/qrcodes"
             className="font-bold text-emerald-700"
           >
-            ▦ QR Generator
+            ▦ Smart QR 
           </Link>
 
           <Link
@@ -569,8 +569,15 @@ export default function QrBuilder({ id }) {
               value={design}
               onChange={setDesign}
             />
+             {/* Mobile preview button/modal */}
+    <MobilePreview>
+      {preview}
+    </MobilePreview>
           </>
         )}
+
+        
+
 
         {/* =========================================================
             STEP 4 — DOWNLOAD

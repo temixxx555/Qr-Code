@@ -626,13 +626,13 @@ export default function QRTypesSection() {
                 {active.description}
               </p>
 
-              <button
+              {/* <button
                 type="button"
                 className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-[#22c55e] px-6 text-sm font-semibold text-white shadow-md shadow-green-200 transition-colors hover:bg-[#16a34a]"
               >
                 <QrCode className="h-4 w-4" />
                 Create QR Code
-              </button>
+              </button> */}
             </div>
           </div>
 

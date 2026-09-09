@@ -4,11 +4,13 @@ import {
   ExternalLink,
   Disc3,
   Headphones,
+  Download,
   Sparkles,
 } from "lucide-react";
 
 import { Picture, Action } from "../presentation";
 import { safeUrl } from "@/lib/qr-content";
+import Link from "next/link";
 
 export default function Preview({ content: c }) {
   const audioUrl = safeUrl(c.url);
@@ -106,38 +108,65 @@ export default function Preview({ content: c }) {
             </div>
           )}
 
-          {/* OPEN AUDIO CTA */}
-          {audioUrl && (
-            <div className="mt-4">
-              <Action
-                href={audioUrl}
-                className="
-                  !min-h-[52px]
-                  !rounded-[16px]
-                  !bg-gradient-to-r
-                  !from-indigo-600
-                  !via-violet-600
-                  !to-fuchsia-600
-                  !shadow-[0_14px_30px_-14px_rgba(124,58,237,0.7)]
-                  hover:!shadow-[0_18px_36px_-14px_rgba(124,58,237,0.8)]
-                "
-              >
-                <span className="flex items-center justify-center gap-2">
-                  <Play
-                    className="h-4 w-4 fill-current"
-                    strokeWidth={1.8}
-                  />
+       {/* AUDIO ACTIONS */}
+{audioUrl && (
+  <div className="mt-4 space-y-2.5">
+    <Action
+      href={audioUrl}
+      className="
+        !min-h-[52px]
+        !rounded-[16px]
+        !bg-gradient-to-r
+        !from-indigo-600
+        !via-violet-600
+        !to-fuchsia-600
+        !shadow-[0_14px_30px_-14px_rgba(124,58,237,0.7)]
+        hover:!shadow-[0_18px_36px_-14px_rgba(124,58,237,0.8)]
+      "
+    >
+      <span className="flex items-center justify-center gap-2">
+        <Play
+          className="h-4 w-4 fill-current"
+          strokeWidth={1.8}
+        />
 
-                  Open audio
+        Open audio
 
-                  <ExternalLink
-                    className="h-3.5 w-3.5"
-                    strokeWidth={2}
-                  />
-                </span>
-              </Action>
-            </div>
-          )}
+        <ExternalLink
+          className="h-3.5 w-3.5"
+          strokeWidth={2}
+        />
+      </span>
+    </Action>
+
+    <Action
+      href={audioUrl}
+      download
+      filename={c.filename || "audio.mp3"}
+      className="
+        !min-h-[50px]
+        !rounded-[16px]
+        !border
+        !border-white/10
+        !bg-white/[0.06]
+        !text-white/80
+        !shadow-none
+        backdrop-blur-xl
+        hover:!bg-white/[0.1]
+        hover:!text-white
+      "
+    >
+      <span className="flex items-center justify-center gap-2">
+        <Download
+          className="h-4 w-4"
+          strokeWidth={1.9}
+        />
+
+        Download audio
+      </span>
+    </Action>
+  </div>
+)}
         </section>
 
         {/* EMPTY AUDIO STATE */}
@@ -158,14 +187,16 @@ export default function Preview({ content: c }) {
         )}
 
         {/* FOOTER */}
+        <Link href={"/"}>
         <div className="mt-auto pt-7 text-center">
           <p className="text-[9px] font-medium text-white/25">
             Powered by{" "}
             <span className="font-semibold text-white/40">
-              Online QR Generator
+              Smart QR 
             </span>
           </p>
         </div>
+        </Link>
       </div>
     </article>
   );

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { FaFacebook as Facebook  } from "react-icons/fa";
 import { Picture, Action } from "../presentation";
+import Link from "next/link";
 
 export default function Preview({ content: c }) {
   return (
@@ -138,12 +139,14 @@ export default function Preview({ content: c }) {
           </section>
 
           {/* FOOTER */}
+          <Link href={"/"}>
           <p className="mt-5 text-center text-[9px] font-medium text-slate-400">
             Powered by{" "}
             <span className="font-semibold text-slate-500">
-              Online QR Generator
+              Smart QR 
             </span>
           </p>
+          </Link>
         </div>
       </div>
     </article>

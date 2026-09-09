@@ -109,7 +109,7 @@ export default function Sidebar({
             </div>
 
             <span className="font-bold">
-              QR Generator
+             Smart QR 
             </span>
           </div>
 
@@ -133,12 +133,10 @@ export default function Sidebar({
             </div>
 
             <div className="leading-tight">
-              <p className="text-sm font-medium text-gray-500">
-                Online
-              </p>
+             
 
               <h2 className="text-[16px] font-bold text-black">
-                QR Generator
+               Smart QR 
               </h2>
             </div>
           </div>

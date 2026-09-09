@@ -82,7 +82,8 @@ export default function BasicConceptsSection() {
     <section className='w-full bg-white pb-6'>
       <div className='mx-auto max-w-7xl px-11'>
         {/* Heading */}
-        <h2 className='text-center text-5xl font-bold tracking-tight text-[#101828] '>
+        <h2 className='text-center text-3xl font-bold tracking-[-0.04em] text-[#101828] sm:text-4xl lg:text-6xl'>
+          
           Basic concepts of a <span className='text-[#22c55e]'>QR code</span>
         </h2>
 

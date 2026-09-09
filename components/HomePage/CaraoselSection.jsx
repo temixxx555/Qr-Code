@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
-/*  Part 1: "Design and creation of QR codes" — click-to-swap tabs     */
+/*  Part 1: Design and creation of QR codes                           */
 /* ------------------------------------------------------------------ */
 
 const designQuestions = [
@@ -41,79 +41,96 @@ function DesignTabsSection() {
   const active =
     designQuestions.find((q) => q.id === activeId) ?? designQuestions[0];
 
-  const scrollByAmount = (direction) => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({
-      left: direction * 280,
-      behavior: "smooth",
-    });
-  };
-
   return (
-    <section className="w-full bg-white py-20 sm:py-24">
-      <div className="mx-auto max-w-6xl ">
+    <section className="w-full bg-white py-14 sm:py-18 lg:py-24">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Heading */}
-        <h2 className="text-center text-5xl font-bold tracking-tight ">
-          <span className="text-[#22c55e]">Design</span>{" "}
-          <span className="text-[#101828]">and creation of QR codes</span>
-        </h2>
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold tracking-[-0.04em] text-[#101828] sm:text-4xl lg:text-6xl">
+            <span className="text-[#22c55e]">Design</span>{" "}
+            and creation of QR codes
+          </h2>
+        </div>
 
-        {/* Tabs row with nav arrows */}
-        <div className="mt-10 flex items-center gap-3">
+        {/* Tabs */}
+        <div className="mt-8 sm:mt-10">
           <div
             ref={scrollRef}
-            className="flex flex-1 gap-3 overflow-x-auto scroll-smooth pb-1 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="
+              flex
+              w-full
+              gap-3
+              overflow-x-auto
+              scroll-smooth
+              pb-2
+              [-ms-overflow-style:none]
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+            "
           >
             {designQuestions.map((q) => {
               const isActive = q.id === activeId;
+
               return (
                 <button
                   key={q.id}
                   type="button"
                   onClick={() => setActiveId(q.id)}
-                  className={`shrink-0 rounded-xl border px-5 py-4 text-left text-[20px] font-medium transition-all duration-200 ${
-                    isActive
-                      ? "border-[#22c55e] text-[#101828] ring-1 ring-[#22c55e]"
-                      : "border-gray-200 text-gray-700 hover:border-gray-300"
-                  }`}
-                  style={{ minWidth: "230px", maxWidth: "250px" }}
+                  className={`
+                    shrink-0
+                    rounded-xl
+                    border
+                    px-4
+                    py-3.5
+                    text-left
+                    text-sm
+                    font-medium
+                    leading-5
+                    transition-all
+                    duration-200
+                    sm:px-5
+                    sm:py-4
+                    sm:text-base
+                    lg:text-lg
+                    ${
+                      isActive
+                        ? "border-[#22c55e] text-[#101828] ring-1 ring-[#22c55e]"
+                        : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+                    }
+                  `}
+                  style={{
+                    width: "clamp(210px, 70vw, 250px)",
+                  }}
                 >
                   {q.question}
                 </button>
               );
             })}
           </div>
-
-          {/* Nav arrows */}
-          {/* <div className="hidden shrink-0 items-center gap-2 sm:flex">
-            <button
-              type="button"
-              onClick={() => scrollByAmount(-1)}
-              aria-label="Scroll left"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByAmount(1)}
-              aria-label="Scroll right"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div> */}
         </div>
 
-        {/* Answer panel (swaps seamlessly) */}
+        {/* Answer */}
         <div
           key={active.id}
-          className="mt-6 animate-in fade-in slide-in-from-bottom-1 rounded-2xl bg-[#f7f9fa] p-6 duration-300 sm:p-8"
+          className="
+            mt-5
+            animate-in
+            fade-in
+            slide-in-from-bottom-1
+            rounded-2xl
+            bg-[#f7f9fa]
+            p-5
+            duration-300
+            sm:mt-6
+            sm:p-7
+            lg:p-8
+          "
         >
-          <h3 className="text-[24px] font-semibold text-[#101828]">
+          <h3 className="text-lg font-semibold leading-7 text-[#101828] sm:text-xl lg:text-2xl">
             {active.question}
           </h3>
-          <p className="mt-2 text-[20px] leading-relaxed text-gray-500">
+
+          <p className="mt-2 text-sm leading-7 text-gray-500 sm:text-base lg:text-lg">
             {active.answer}
           </p>
         </div>
@@ -123,13 +140,14 @@ function DesignTabsSection() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Part 2: "Scanning and printing of QR codes" — accordion            */
+/*  Part 2: Scanning and printing of QR codes                         */
 /* ------------------------------------------------------------------ */
 
 const scanningQuestions = [
   {
     id: "add",
-    question: "Can I add a QR code to my website (and will people be able to scan it)?",
+    question:
+      "Can I add a QR code to my website (and will people be able to scan it)?",
     answer:
       "You can add QR codes to pretty much anything you can think of, from physical goods and locations to digital properties like websites, applications, emails and social media profiles. People will be able to scan it with any compatible device.",
   },
@@ -161,30 +179,91 @@ const scanningQuestions = [
 
 function AccordionItem({ item, isOpen, onToggle }) {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_2px_8px_rgba(16,24,40,0.04)]">
+    <div
+      className="
+        w-full
+        min-w-0
+        overflow-hidden
+        rounded-2xl
+        border
+        border-gray-100
+        bg-white
+        shadow-[0_2px_8px_rgba(16,24,40,0.04)]
+      "
+    >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+        className="
+          flex
+          w-full
+          min-w-0
+          items-start
+          justify-between
+          gap-3
+          px-4
+          py-4
+          text-left
+          sm:items-center
+          sm:gap-4
+          sm:px-6
+          sm:py-5
+        "
       >
-        <span className="text-[24px] font-semibold text-[#101828] ">
+        <span className="min-w-0 flex-1 text-base font-semibold leading-6 text-[#101828] sm:text-lg sm:leading-7 lg:text-xl">
           {item.question}
         </span>
+
         <ChevronDown
-          className={`h-10 w-8 shrink-0 text-gray-400 transition-transform duration-300 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`
+            mt-0.5
+            h-5
+            w-5
+            shrink-0
+            text-gray-400
+            transition-transform
+            duration-300
+            sm:mt-0
+            sm:h-6
+            sm:w-6
+            ${
+              isOpen ? "rotate-180" : ""
+            }
+          `}
         />
       </button>
 
       <div
-        className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
+        className={`
+          grid
+          overflow-hidden
+          transition-all
+          duration-300
+          ease-in-out
+          ${
+            isOpen
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0"
+          }
+        `}
       >
-        <div className="overflow-hidden">
-          <p className="px-6 pb-5 ml-10 text-[20px] leading-relaxed text-gray-500">
+        <div className="min-w-0 overflow-hidden">
+          <p
+            className="
+              break-words
+              px-4
+              pb-5
+              text-sm
+              leading-7
+              text-gray-500
+              sm:px-6
+              sm:pl-8
+              sm:text-base
+              lg:pl-10
+              lg:text-lg
+            "
+          >
             {item.answer}
           </p>
         </div>
@@ -194,32 +273,37 @@ function AccordionItem({ item, isOpen, onToggle }) {
 }
 
 function ScanningAccordionSection() {
-  // First two open by default, matching the screenshot
-  const [openIds, setOpenIds] = useState(new Set([""]));
+  const [openIds, setOpenIds] = useState(new Set());
 
   const toggle = (id) => {
     setOpenIds((prev) => {
       const next = new Set(prev);
+
       if (next.has(id)) {
         next.delete(id);
       } else {
         next.add(id);
       }
+
       return next;
     });
   };
 
   return (
-    <section className="w-full bg-[#fafbfc] ">
-      <div className="mx-auto max-w-6xl">
+    <section className="w-full bg-[#fafbfc] py-14 sm:py-18 lg:py-24">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Heading */}
-        <h2 className="text-center text-5xl font-bold tracking-tight text-[#101828] sm:text-4xl">
-          Scanning and printing of{" "}
-          <span className="text-[#22c55e]">QR codes</span>
-        </h2>
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold tracking-[-0.04em] text-[#101828] sm:text-4xl lg:text-5xl">
+            Scanning and printing of{" "}
+            <span className="text-[#22c55e]">
+              QR codes
+            </span>
+          </h2>
+        </div>
 
-        {/* Accordion list */}
-        <div className="mt-10 flex flex-col gap-4">
+        {/* Accordion */}
+        <div className="mt-8 flex w-full min-w-0 flex-col gap-3 sm:mt-10 sm:gap-4">
           {scanningQuestions.map((item) => (
             <AccordionItem
               key={item.id}
@@ -235,7 +319,7 @@ function ScanningAccordionSection() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Combined export                                                    */
+/*  Combined export                                                   */
 /* ------------------------------------------------------------------ */
 
 export default function DesignAndScanningSection() {

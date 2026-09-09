@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import api from "@/lib/axios";
+import * as XLSX from "xlsx";
 function Bars({ title, rows = [] }) {
   const max = Math.max(1, ...rows.map((r) => r.count));
   return (
@@ -66,28 +67,292 @@ export default function AnalyticsDashboard({ qrId = "" }) {
       alive = false;
     };
   }, [days, qr, from, to]);
-  function csv() {
-    const rows = [
-      ["Date (UTC)", "Scans"],
-      ...(data?.timeline || []).map((r) => [r._id, r.count]),
-    ];
-    const blob = new Blob(
-      [
-        rows
-          .map((row) =>
-            row.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(","),
-          )
-          .join("\r\n"),
-      ],
-      { type: "text/csv;charset=utf-8" },
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "qr-scan-timeline.csv";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+ function exportExcel() {
+  if (!data) return;
+
+  const workbook = XLSX.utils.book_new();
+
+  // -------------------------
+  // SUMMARY
+  // -------------------------
+  const summary = [
+    ["QR Analytics Report"],
+    [],
+    ["Metric", "Value"],
+    ["QR Codes", data.totals?.codes || 0],
+    ["Scans in period", data.totals?.scans || 0],
+    ["Unique visitors", data.totals?.unique || 0],
+    ["Scans today", data.totals?.today || 0],
+    ["Scans this week", data.totals?.week || 0],
+    ["Scans this month", data.totals?.month || 0],
+    [],
+    [
+      "First scan",
+      data.first
+        ? new Date(data.first).toLocaleString()
+        : "No scans",
+    ],
+    [
+      "Last scan",
+      data.last
+        ? new Date(data.last).toLocaleString()
+        : "No scans",
+    ],
+    [],
+    [
+      "Report period",
+      `${new Date(data.from).toLocaleDateString()} - ${new Date(
+        data.to,
+      ).toLocaleDateString()}`,
+    ],
+  ];
+
+  const summarySheet =
+    XLSX.utils.aoa_to_sheet(summary);
+
+  summarySheet["!cols"] = [
+    { wch: 25 },
+    { wch: 35 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    summarySheet,
+    "Summary",
+  );
+
+  // -------------------------
+  // TIMELINE
+  // -------------------------
+  const timelineRows = [
+    ["Date (UTC)", "Scans"],
+    ...(data.timeline || []).map((row) => [
+      row._id,
+      row.count,
+    ]),
+  ];
+
+  const timelineSheet =
+    XLSX.utils.aoa_to_sheet(timelineRows);
+
+  timelineSheet["!cols"] = [
+    { wch: 18 },
+    { wch: 12 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    timelineSheet,
+    "Timeline",
+  );
+
+  // -------------------------
+  // QR CODES
+  // -------------------------
+  const qrRows = [
+    [
+      "QR Code",
+      "Type",
+      "Status",
+      "Total Scans",
+      "Unique Scans",
+    ],
+    ...(data.codes || []).map((code) => [
+      code.name || "Untitled QR",
+      code.type || "",
+      code.status || "",
+      code.scanCount || 0,
+      code.uniqueScanCount || 0,
+    ]),
+  ];
+
+  const qrSheet =
+    XLSX.utils.aoa_to_sheet(qrRows);
+
+  qrSheet["!cols"] = [
+    { wch: 30 },
+    { wch: 18 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 15 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    qrSheet,
+    "QR Codes",
+  );
+
+  // -------------------------
+  // DEVICES
+  // -------------------------
+  const deviceRows = [
+    ["Device", "Scans"],
+    ...(data.devices || []).map((row) => [
+      row._id || "Unknown",
+      row.count,
+    ]),
+  ];
+
+  const deviceSheet =
+    XLSX.utils.aoa_to_sheet(deviceRows);
+
+  deviceSheet["!cols"] = [
+    { wch: 25 },
+    { wch: 12 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    deviceSheet,
+    "Devices",
+  );
+
+  // -------------------------
+  // OPERATING SYSTEMS
+  // -------------------------
+  const osRows = [
+    ["Operating System", "Scans"],
+    ...(data.os || []).map((row) => [
+      row._id || "Unknown",
+      row.count,
+    ]),
+  ];
+
+  const osSheet =
+    XLSX.utils.aoa_to_sheet(osRows);
+
+  osSheet["!cols"] = [
+    { wch: 25 },
+    { wch: 12 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    osSheet,
+    "Operating Systems",
+  );
+
+  // -------------------------
+  // BROWSERS
+  // -------------------------
+  const browserRows = [
+    ["Browser", "Scans"],
+    ...(data.browsers || []).map((row) => [
+      row._id || "Unknown",
+      row.count,
+    ]),
+  ];
+
+  const browserSheet =
+    XLSX.utils.aoa_to_sheet(browserRows);
+
+  browserSheet["!cols"] = [
+    { wch: 25 },
+    { wch: 12 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    browserSheet,
+    "Browsers",
+  );
+
+  // -------------------------
+  // COUNTRIES
+  // -------------------------
+  const countryRows = [
+    ["Country", "Scans"],
+    ...(data.countries || []).map((row) => [
+      row._id || "Unknown",
+      row.count,
+    ]),
+  ];
+
+  const countrySheet =
+    XLSX.utils.aoa_to_sheet(countryRows);
+
+  countrySheet["!cols"] = [
+    { wch: 25 },
+    { wch: 12 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    countrySheet,
+    "Countries",
+  );
+
+  // -------------------------
+  // RECENT SCANS
+  // -------------------------
+  const recentRows = [
+    [
+      "Date",
+      "Time",
+      "Device",
+      "Operating System",
+      "Browser",
+      "Country",
+    ],
+
+    ...(data.recent || []).map((scan) => {
+      const date = new Date(scan.scannedAt);
+
+      return [
+        date.toLocaleDateString(),
+        date.toLocaleTimeString(),
+        scan.deviceType || "Unknown",
+        scan.os || "Unknown",
+        scan.browser || "Unknown",
+        scan.country || "Unknown",
+      ];
+    }),
+  ];
+
+  const recentSheet =
+    XLSX.utils.aoa_to_sheet(recentRows);
+
+  recentSheet["!cols"] = [
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 18 },
+    { wch: 22 },
+    { wch: 18 },
+    { wch: 18 },
+  ];
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    recentSheet,
+    "Recent Scans",
+  );
+
+  // -------------------------
+  // DOWNLOAD
+  // -------------------------
+  const selectedQr = qr
+    ? data.codes?.find(
+        (code) => String(code._id) === String(qr),
+      )
+    : null;
+
+  const safeName = (
+    selectedQr?.name || "qr-analytics"
+  )
+    .replace(/[^a-zA-Z0-9-_ ]/g, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+
+  const today = new Date()
+    .toISOString()
+    .slice(0, 10);
+
+  XLSX.writeFile(
+    workbook,
+    `${safeName}-${today}.xlsx`,
+  );
+}
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap justify-between gap-4">
@@ -95,7 +360,7 @@ export default function AnalyticsDashboard({ qrId = "" }) {
           <p className="text-sm text-emerald-600">Understand your audience</p>
           <h1 className="text-3xl font-bold">Scan analytics</h1>
         </div>
-        <button disabled={!data || loading} onClick={csv} className="action">
+        <button disabled={!data || loading} onClick={exportExcel} className="action">
           Export timeline CSV
         </button>
       </div>

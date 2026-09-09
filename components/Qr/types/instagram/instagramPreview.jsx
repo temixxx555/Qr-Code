@@ -9,6 +9,7 @@ import {  FaInstagram as Instagram  } from "react-icons/fa";
 
 import { Picture, Action } from "../presentation";
 import { instagramUrl } from "@/lib/qr-content";
+import Link from "next/link";
 
 export default function Preview({ content: c }) {
   const profileUrl = instagramUrl(c.username || c.url);
@@ -151,12 +152,14 @@ export default function Preview({ content: c }) {
         </div>
 
         {/* FOOTER */}
+        <Link href={"/"}>
         <p className="text-center text-[9px] font-medium text-slate-400">
           Powered by{" "}
           <span className="font-semibold text-slate-500">
-            Online QR Generator
+           Smart QR 
           </span>
         </p>
+        </Link>
       </div>
     </article>
   );

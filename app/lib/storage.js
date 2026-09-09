@@ -1,29 +1,31 @@
-import "server-only";
-import path from "node:path";
-import fs from "node:fs/promises";
-export function storageRoot() {
-  if (process.env.NODE_ENV === "production" && !process.env.UPLOAD_DIR)
-    throw new Error(
-      "Configure UPLOAD_DIR on persistent storage before uploading.",
-    );
-  return path.resolve(
-    /* turbopackIgnore: true */ process.env.UPLOAD_DIR || ".uploads",
-  );
-}
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export async function putFile(name, bytes) {
-  const root = storageRoot();
-  await fs.mkdir(root, { recursive: true });
-  await fs.writeFile(path.join(/* turbopackIgnore: true */ root, name), bytes, {
-    flag: "wx",
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "auto",
+        folder: "qr-generator/uploads",
+
+        // Remove extension because Cloudinary handles the format.
+        public_id: name.replace(/\.[^/.]+$/, ""),
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      },
+    );
+
+    uploadStream.end(bytes);
   });
-}
-export async function getFile(name) {
-  if (!/^[a-f0-9-]+\.(png|jpg|webp|pdf|mp4|webm|mp3|wav|ogg)$/.test(name))
-    throw new Error("Invalid file");
-  return fs.readFile(
-    /* turbopackIgnore: true */ path.join(
-      /* turbopackIgnore: true */ storageRoot(),
-      name,
-    ),
-  );
 }

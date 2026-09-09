@@ -6,6 +6,7 @@ import {
 
 import { Picture } from "../presentation";
 import { safeUrl } from "@/lib/qr-content";
+import Link from "next/link";
 
 export default function Preview({ content: c }) {
   const images = Array.isArray(c.images) ? c.images : [];
@@ -119,14 +120,16 @@ export default function Preview({ content: c }) {
         )}
 
         {/* FOOTER */}
+        <Link href={"/"}>
         <div className="mt-auto pt-7 text-center">
           <p className="text-[9px] font-medium text-slate-400">
             Powered by{" "}
             <span className="font-semibold text-slate-500">
-              Online QR Generator
+              Smart QR 
             </span>
           </p>
         </div>
+        </Link>
       </div>
     </article>
   );

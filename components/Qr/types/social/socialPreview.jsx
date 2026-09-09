@@ -7,6 +7,7 @@ import {
 
 import SocialMark from "../SocialMark";
 import { Picture } from "../presentation";
+import Link from "next/link";
 
 export default function Preview({ content: c }) {
   const links = Array.isArray(c.links) ? c.links : [];
@@ -156,14 +157,16 @@ export default function Preview({ content: c }) {
         </div>
 
         {/* FOOTER */}
+        <Link href={"/"}>
         <div className="mt-auto pt-7 text-center">
           <p className="text-[9px] font-medium text-white/25">
             Powered by{" "}
             <span className="font-semibold text-white/40">
-              Online QR Generator
+               Smart QR 
             </span>
           </p>
         </div>
+        </Link>
       </div>
     </article>
   );

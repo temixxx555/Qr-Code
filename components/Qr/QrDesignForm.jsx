@@ -781,7 +781,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
           PHONE PREVIEW
       ====================================================== */}
 
-      <div className="flex justify-center lg:sticky lg:top-25 lg:h-fit">
+      <div className=" justify-center hidden lg:flex lg:sticky lg:top-25 lg:h-fit">
         <QrPhonePreview
           qrRef={qrRef}
           frame={selectedFrame}
@@ -789,6 +789,7 @@ const QrDesignForm = ({ url = "", value = "", onChange }) => {
           frameText={frameText}
         />
       </div>
+      
     </div>
   );
 };

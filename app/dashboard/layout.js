@@ -28,7 +28,7 @@ export default function DashboardLayout({ children }) {
           </div>
 
           <span className="font-bold text-gray-900">
-            QR Generator
+           Smart QR 
           </span>
         </div>
       </div>

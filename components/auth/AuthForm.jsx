@@ -150,7 +150,7 @@ export default function AuthForm({ mode }) {
 
               {/* Heading */}
               <div>
-                <h2 className="text-3xl font-semibold tracking-[-0.035em] text-slate-950">
+                <h2 className="text-3xl font-semibold mt-5 tracking-[-0.035em] text-slate-950">
                   {isLogin
                     ? "Welcome back"
                     : "Create your account"}

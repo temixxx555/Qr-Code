@@ -254,7 +254,7 @@ export default function Footer() {
               </p>
 
               <Link
-                href='/register'
+                href='/signup'
                 className='
                   mt-5
                   flex

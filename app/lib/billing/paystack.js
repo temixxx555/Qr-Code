@@ -1,13 +1,11 @@
 import "server-only";
 import { verifyWebhookSignature } from "@/lib/billing-security";
 export function billingMode() {
-  const value =
-    process.env.PAYSTACK_MODE ||
-    (process.env.NODE_ENV === "production" ? "live" : "test");
-  if (!["test", "live"].includes(value))
+    const value = process.env.PAYSTACK_MODE || "test";
+
+  if (!["test", "live"].includes(value)) {
     throw new Error("Invalid Paystack environment.");
-  if (process.env.NODE_ENV === "production" && value !== "live")
-    throw new Error("Live Paystack configuration is required in production.");
+  }
   return value;
 }
 export function secretKey(mode = billingMode()) {

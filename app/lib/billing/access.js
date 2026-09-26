@@ -24,15 +24,23 @@ export class BillingError extends Error {
   }
 }
 export function billingError(error) {
+  console.error("BILLING ERROR:", {
+    name: error?.name,
+    message: error?.message,
+    code: error?.code,
+    status: error?.status,
+    stack: error?.stack,
+  });
+
   return Response.json(
     {
       message:
         error instanceof BillingError
           ? error.message
           : "The billing operation could not be completed. Please try again or contact support.",
-      code: error.code || "BILLING_ERROR",
+      code: error?.code || "BILLING_ERROR",
     },
-    { status: error.status || 503 },
+    { status: error?.status || 503 },
   );
 }
 export function sameOrigin(request) {

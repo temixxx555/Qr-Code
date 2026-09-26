@@ -2,6 +2,10 @@
   "name": "qr-generator",
   "version": "0.1.0",
   "private": true,
+
+    "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -42,5 +46,11 @@
     "eslint-config-next": "16.3.0",
     "prettier": "^3.9.6",
     "tailwindcss": "^4"
+  },
+
+  "overrides": {
+    "jwks-rsa": {
+      "jose": "4.15.9"
+    }
   }
 }

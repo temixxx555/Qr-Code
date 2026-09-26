@@ -1,8 +1,10 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/HomePage/NavBar";
+import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { DM_Sans } from "next/font/google";
+import ReferralCapture from "@/components/Billing/ReferralCapture";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -19,13 +21,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={` h-full antialiased`}>
+    <html lang='en' className={` h-full antialiased`}>
       <body
-        cz-shortcut-listen="true"
+        cz-shortcut-listen='true'
         className={`${dmSans.className} flex min-h-full flex-col`}
       >
         <AuthProvider>
+          <ReferralCapture />
           {/* <Navbar /> */}
+          <Toaster position='top-right' richColors closeButton />
           {children}
         </AuthProvider>
       </body>

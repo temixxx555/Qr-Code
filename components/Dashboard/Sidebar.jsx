@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   QrCode,
   ChartColumn,
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 
 const menuItems = [
+  { name: "Referral earnings", href: "/dashboard/referrals", icon: Wallet },
+  { name: "Business profile", href: "/dashboard/business", icon: User },
   {
     name: "Create QR Code",
     href: "/qr",
@@ -60,6 +63,7 @@ export default function Sidebar({
   setSidebarOpen,
 }) {
   const pathname = usePathname();
+  const { user } = useAuth();
 
   function closeMobileSidebar() {
     if (setSidebarOpen) {
@@ -144,6 +148,7 @@ export default function Sidebar({
 
         {/* MAIN NAVIGATION */}
         <nav className="px-2 pt-3 lg:pt-0">
+          {user?.adminRole && user.adminRole !== "none" && <Link href="/admin" className="block rounded-xl px-6 py-3 font-semibold text-emerald-700">Administration</Link>}
           {menuItems.map((item) => {
             const Icon = item.icon;
 

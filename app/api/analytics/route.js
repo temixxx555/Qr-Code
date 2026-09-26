@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { premiumGate } from "@/app/lib/billing/access";
 import QRCode from "@/app/models/QrCode";
 import Scan from "@/app/models/Scan";
 import { connectDB } from "@/app/lib/mongodb";
@@ -12,6 +13,8 @@ export async function GET(request) {
         { status: 401 },
       );
     await connectDB();
+    const gate = await premiumGate(user.userId);
+    if (gate) return gate;
     const url = new URL(request.url);
     const qrId = url.searchParams.get("qr");
     const codes = await QRCode.find({ userId: user.userId })

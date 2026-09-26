@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    adminRole: {
+      type: String,
+      enum: ["none", "superadmin", "finance", "support", "analyst"],
+      default: "none",
+    },
+    suspended: { type: Boolean, default: false },
     name: {
       type: String,
       required: true,
@@ -20,8 +26,20 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      required: false,
       minlength: 8,
+      default: null,
+    },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    googleUid: {
+      type: String,
+      default: null,
     },
 
     isVerified: {
@@ -33,13 +51,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-
   },
   {
     timestamps: true,
-  }
+  },
 );
 
+// const User = mongoose.models.User || mongoose.model("User", userSchema);
+delete mongoose.models["User"];
 const User = mongoose.models.User || mongoose.model("User", userSchema);
-
 export default User;

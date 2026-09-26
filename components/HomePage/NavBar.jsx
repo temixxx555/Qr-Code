@@ -87,6 +87,7 @@ export default function Navbar() {
 
         {/* DESKTOP NAV */}
         <div className="hidden items-center gap-4 md:flex lg:gap-6">
+          <Link href="/pricing" className="text-sm font-medium text-slate-700 hover:text-emerald-600">Pricing</Link>
           <Link href="/faq">
             <Button
               variant="outline"
@@ -171,6 +172,7 @@ export default function Navbar() {
         `}
       >
         <div className="space-y-3 px-4 py-4 sm:px-6">
+          <Link href="/pricing" onClick={() => setMenuOpen(false)} className="block rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700">Pricing</Link>
           {/* HELP */}
           <Link
             href="/faq"

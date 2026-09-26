@@ -4,10 +4,7 @@ import bcrypt from "bcryptjs";
 import User from "../../../models/User.js";
 import { connectDB } from "@/app/lib/mongodb.js";
 
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "@/app/lib/jwt.js";
+import { generateAccessToken, generateRefreshToken } from "@/app/lib/jwt.js";
 
 export async function POST(request) {
   try {
@@ -22,7 +19,7 @@ export async function POST(request) {
           success: false,
           message: "Email and password are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,15 +40,21 @@ export async function POST(request) {
           success: false,
           message: "Invalid email or password",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
-
+    if (!user.password) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "This account uses Google sign-in. Continue with Google instead.",
+        },
+        { status: 401 },
+      );
+    }
     // Compare password
-    const passwordMatches = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const passwordMatches = await bcrypt.compare(password, user.password);
 
     if (!passwordMatches) {
       return NextResponse.json(
@@ -59,7 +62,7 @@ export async function POST(request) {
           success: false,
           message: "Invalid email or password",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -85,7 +88,7 @@ export async function POST(request) {
           isVerified: user.isVerified,
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
 
     // Access token cookie
@@ -115,7 +118,7 @@ export async function POST(request) {
         success: false,
         message: "Something went wrong while logging in",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

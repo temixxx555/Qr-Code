@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { premiumGate } from "@/app/lib/billing/access";
 import QRCode from "@/app/models/QrCode";
 import { connectDB } from "@/app/lib/mongodb";
 import { getAuthenticatedUser } from "@/app/lib/auth";
@@ -12,6 +13,8 @@ export async function GET() {
         { status: 401 },
       );
     await connectDB();
+    const gate = await premiumGate(user.userId);
+    if (gate) return gate;
     const codes = await QRCode.find({ userId: user.userId })
       .sort({ createdAt: -1 })
       .lean();
@@ -35,6 +38,19 @@ export async function POST(request) {
         { status: 401 },
       );
     const body = await request.json();
+    if (user.suspended)
+      return Response.json(
+        { message: "This account is suspended. Contact support." },
+        { status: 403 },
+      );
+    if (body.folderId && body.type === "wifi") {
+      const gate = await premiumGate(user.userId);
+      if (gate) return gate;
+    }
+    // if (body.type !== "wifi") {
+    //   const gate = await premiumGate(user.userId);
+    //   if (gate) return gate;
+    // }
     const origin = publicOrigin(request);
     await connectDB();
     const qr = new QRCode({

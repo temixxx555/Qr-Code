@@ -7,7 +7,7 @@ export function proxy(request) {
 
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
-  const isProtectedPage = pathname.startsWith("/dashboard");
+  const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
 
   // User is logged in and tries to visit login/signup
   if (accessToken && isAuthPage) {
@@ -27,5 +27,5 @@ export function proxy(request) {
 }
 
 export const config = {
-  matcher: ["/login", "/signup", "/dashboard/:path*"],
+  matcher: ["/login", "/signup", "/dashboard/:path*", "/admin/:path*"],
 };

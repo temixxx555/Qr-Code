@@ -1,4 +1,5 @@
 import Folder from "@/app/models/Folder";
+import { premiumGate } from "@/app/lib/billing/access";
 import QRCode from "@/app/models/QrCode";
 import { connectDB } from "@/app/lib/mongodb";
 import { getAuthenticatedUser } from "@/app/lib/auth";
@@ -15,6 +16,8 @@ export async function GET() {
         { message: "Authentication required" },
         { status: 401 },
       );
+    const gate = await premiumGate(u.userId);
+    if (gate) return gate;
     return Response.json({
       folders: await Folder.find({ userId: u.userId }).sort({ name: 1 }).lean(),
     });
@@ -34,6 +37,8 @@ export async function POST(request) {
         { status: 401 },
       );
     const { name } = await request.json();
+    const gate = await premiumGate(u.userId);
+    if (gate) return gate;
     if (typeof name !== "string" || !name.trim() || name.length > 80)
       throw new Error("Use a folder name of 1–80 characters.");
     return Response.json(
@@ -56,6 +61,8 @@ export async function PATCH(request) {
         { status: 401 },
       );
     const { id, name } = await request.json();
+    const gate = await premiumGate(u.userId);
+    if (gate) return gate;
     if (
       typeof id !== "string" ||
       typeof name !== "string" ||
@@ -87,6 +94,8 @@ export async function DELETE(request) {
         { status: 401 },
       );
     const id = new URL(request.url).searchParams.get("id");
+    const gate = await premiumGate(u.userId);
+    if (gate) return gate;
     if (await QRCode.exists({ folderId: id, userId: u.userId }))
       throw new Error("Move the QR codes out before deleting this folder.");
     await Folder.deleteOne({ _id: id, userId: u.userId });

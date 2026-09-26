@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { premiumGate } from "@/app/lib/billing/access";
 
 import { getAuthenticatedUser } from "@/app/lib/auth";
 import { putFile } from "@/app/lib/storage";
@@ -24,13 +25,16 @@ export async function POST(request) {
     // Authentication
     // ---------------------------------------------
 
-    if (!(await getAuthenticatedUser())) {
+    const user = await getAuthenticatedUser();
+    if (!user) {
       return Response.json(
         { message: "Authentication required" },
         { status: 401 },
       );
     }
 
+    const gate = await premiumGate(user.userId);
+    if (gate) return gate;
     // ---------------------------------------------
     // Request size protection
     // ---------------------------------------------

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Sidebar from "@/components/Dashboard/Sidebar";
+import PremiumGate from "@/components/Billing/PremiumGate";
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -60,7 +61,7 @@ export default function DashboardLayout({ children }) {
         `}
       >
         <div className="p-4 sm:p-6 lg:p-8">
-          {children}
+          <PremiumGate>{children}</PremiumGate>
         </div>
       </main>
 

@@ -15,17 +15,17 @@ export default function AccountPage() {
       .then(({ data }) => setUser(data.user))
       .catch(() => setError("Could not load your account."));
   }, []);
-const logout = async () => {
-  try {
-    await api.post("/auth/logout");
+  const logout = async () => {
+    try {
+      await api.post("/auth/logout");
 
-    router.replace("/login");
-    router.refresh();
-  } catch (error) {
-    console.error("Logout failed:", error);
-    setError("Could not sign out. Please try again.");
-  }
-};
+      window.location.href = "/login";
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setError("Could not sign out. Please try again.");
+    }
+  };
   return (
     <div className='mx-auto max-w-6xl'>
       <p className='text-sm font-medium text-emerald-600'>Dashboard</p>

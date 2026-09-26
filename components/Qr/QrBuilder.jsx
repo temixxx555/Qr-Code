@@ -11,15 +11,12 @@ import QrDownload from "./QrDownload";
 import MobilePreview from "./MobilePreview";
 import { Field } from "./types/controls";
 import { validateContent, wifiPayload } from "@/lib/qr-content";
-import {
-  editorDesign,
-  storedDesign,
-  contrastWarning,
-} from "@/lib/qr-design";
+import { editorDesign, storedDesign, contrastWarning } from "@/lib/qr-design";
+import { toast } from "sonner";
 
 const QrDesignForm = dynamic(() => import("./QrDesignForm"), {
   ssr: false,
-  loading: () => <p className="p-10 text-center">Loading designer…</p>,
+  loading: () => <p className='p-10 text-center'>Loading designer…</p>,
 });
 
 export default function QrBuilder({ id }) {
@@ -35,7 +32,18 @@ export default function QrBuilder({ id }) {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(!!id);
   const [error, setError] = useState("");
+  const [upgradeRequired, setUpgradeRequired] = useState(false);
   const saving = useRef(false);
+
+  function handleError(error, fallback = "Something went wrong.") {
+    const message =
+      error?.response?.data?.message || error?.message || fallback;
+
+    setError(message);
+    toast.error(message);
+
+    return message;
+  }
 
   useEffect(() => {
     let alive = true;
@@ -76,9 +84,7 @@ export default function QrBuilder({ id }) {
         })
         .catch((e) => {
           if (alive) {
-            setError(
-              e.response?.data?.message || "Could not load QR code.",
-            );
+            handleError(e, "Could not load QR code.");
           }
         })
         .finally(() => {
@@ -101,8 +107,7 @@ export default function QrBuilder({ id }) {
       ? "Enter a protection password with at least 8 characters."
       : null);
 
-  const selected =
-    qrTypes.find((t) => t.id === type) || qrTypes[0];
+  const selected = qrTypes.find((t) => t.id === type) || qrTypes[0];
 
   /*
    * Hovering a QR type only changes what is shown in the phone preview.
@@ -112,8 +117,7 @@ export default function QrBuilder({ id }) {
   const previewType = hoveredType || type;
   const previewContent = drafts[previewType] || {};
 
-  const previewItem =
-    qrTypes.find((t) => t.id === previewType) || selected;
+  const previewItem = qrTypes.find((t) => t.id === previewType) || selected;
 
   const update = (next) => {
     setDrafts((prev) => ({
@@ -121,10 +125,7 @@ export default function QrBuilder({ id }) {
       [type]: next,
     }));
 
-    if (
-      next.qrName !== undefined &&
-      next.qrName !== content.qrName
-    ) {
+    if (next.qrName !== undefined && next.qrName !== content.qrName) {
       setName(next.qrName);
     }
   };
@@ -162,21 +163,33 @@ export default function QrBuilder({ id }) {
         folderId: folderId || null,
       };
 
-      const response = saved
-        ? await api.patch(
-            `/qr/${saved._id || saved.id}`,
-            body,
-          )
-        : await api.post("/qr", body);
+      // const response = saved
+      //   ? await api.patch(`/qr/${saved._id || saved.id}`, body)
+      //   : await api.post("/qr", body);
+
+      let response;
+
+      // i used this  instead so that freemium can create qr
+      if (saved) {
+        try {
+          response = await api.patch(`/qr/${saved._id || saved.id}`, body);
+        } catch (e) {
+          if (e.response?.data?.code === "UPGRADE_REQUIRED") {
+            response = await api.post("/qr", body);
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        response = await api.post("/qr", body);
+      }
 
       setSaved(response.data.qrCode);
 
       return response.data.qrCode;
     } catch (e) {
-      setError(
-        e.response?.data?.message ||
-          "Could not save. Check your connection and try again.",
-      );
+      setUpgradeRequired(e.response?.data?.code === "UPGRADE_REQUIRED");
+      handleError(e, "Could not save. Check your connection and try again.");
 
       return null;
     } finally {
@@ -188,8 +201,10 @@ export default function QrBuilder({ id }) {
   async function select(next) {
     if (saved && next !== type) {
       if (next === "wifi" || type === "wifi") {
-        setError("Static WiFi codes cannot change type.");
-        return;
+        const message = "Static WiFi codes cannot change type.";
+
+        setError(message);
+        toast.error(message);
       }
 
       if (
@@ -206,20 +221,37 @@ export default function QrBuilder({ id }) {
     setError("");
   }
 
+  // if (upgradeRequired) {
+  //   return (
+  //     <div className='mx-auto my-16 max-w-xl rounded-2xl border bg-white p-8'>
+  //       <h1 className='text-2xl font-semibold'>Publish with Premium</h1>
+  //       <p className='mt-3 text-slate-500'>
+  //         Your draft is still here. Premium unlocks dynamic publishing, editing,
+  //         and scan analytics.
+  //       </p>
+  //       <Link
+  //         className='mt-6 inline-block rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white'
+  //         href='/dashboard/billing'
+  //         target='_blank'
+  //       >
+  //         View plans
+  //       </Link>
+  //       <button
+  //         className='ml-4 text-sm text-emerald-700'
+  //         onClick={() => setUpgradeRequired(false)}
+  //       >
+  //         Return to my draft
+  //       </button>
+  //     </div>
+  //   );
+  // }
   if (loading) {
-    return (
-      <p className="p-20 text-center">
-        Loading your QR code…
-      </p>
-    );
+    return <p className='p-20 text-center'>Loading your QR code…</p>;
   }
 
   if (id && !saved) {
     return (
-      <p
-        role="alert"
-        className="p-10 text-red-600"
-      >
+      <p role='alert' className='p-10 text-red-600'>
         {error || "QR not found."}
       </p>
     );
@@ -241,54 +273,40 @@ export default function QrBuilder({ id }) {
   );
 
   return (
-    <main className="min-h-screen bg-[#f8faf9] text-slate-900">
-
+    <main className='min-h-screen bg-[#f8faf9] text-slate-900'>
       {/* Header */}
-      <header className="border-b bg-white px-5 py-3">
-        <div className="mx-auto flex max-w-6xl items-center justify-between">
+      <header className='border-b bg-white px-5 py-3'>
+        <div className='mx-auto flex max-w-6xl items-center justify-between'>
           <Link
-            href="/dashboard/qrcodes"
-            className="font-bold text-emerald-700"
+            href='/dashboard/qrcodes'
+            className='font-bold text-emerald-700'
           >
-            ▦ Smart QR 
+            ▦ Smart QR
           </Link>
 
-          <Link
-            href="/dashboard/qrcodes"
-            className="text-sm text-slate-500"
-          >
+          <Link href='/dashboard/qrcodes' className='text-sm text-slate-500'>
             My QR Codes
           </Link>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 py-2 sm:px-7">
-
+      <div className='mx-auto max-w-6xl px-4 py-2 sm:px-7'>
         {/* Progress */}
         <ol
-          aria-label="Builder progress"
-          className="mb-5 grid grid-cols-4 gap-2"
+          aria-label='Builder progress'
+          className='mb-5 grid grid-cols-4 gap-2'
         >
-          {[
-            "QR Type",
-            "Content",
-            "Design",
-            "Download",
-          ].map((label, i) => (
+          {["QR Type", "Content", "Design", "Download"].map((label, i) => (
             <li
               key={label}
-              aria-current={
-                step === i + 1 ? "step" : undefined
-              }
+              aria-current={step === i + 1 ? "step" : undefined}
               className={`border-b-2 pb-3 text-center text-xs font-semibold sm:text-sm ${
                 step >= i + 1
                   ? "border-emerald-500 text-emerald-700"
                   : "border-slate-200 text-slate-400"
               }`}
             >
-              <span className="mr-1">
-                {step > i + 1 ? "✓" : i + 1}.
-              </span>
+              <span className='mr-1'>{step > i + 1 ? "✓" : i + 1}.</span>
 
               {label}
             </li>
@@ -296,14 +314,12 @@ export default function QrBuilder({ id }) {
         </ol>
 
         {/* Page title */}
-        <div className="mb-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">
-            {saved
-              ? "Your QR workspace"
-              : "Create something worth scanning"}
+        <div className='mb-3'>
+          <p className='text-xs font-semibold uppercase tracking-widest text-emerald-600'>
+            {saved ? "Your QR workspace" : "Create something worth scanning"}
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold">
+          <h1 className='mt-2 text-3xl font-bold'>
             {step === 1
               ? "What would you like to share?"
               : step === 2
@@ -317,8 +333,8 @@ export default function QrBuilder({ id }) {
         {/* Error */}
         {error && (
           <p
-            role="alert"
-            className="mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+            role='alert'
+            className='mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-700'
           >
             {error}
           </p>
@@ -329,37 +345,25 @@ export default function QrBuilder({ id }) {
             ========================================================= */}
 
         {step === 1 && (
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_390px]">
-
+          <div className='grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:grid-cols-[minmax(0,1fr)_390px]'>
             {/* QR TYPE BUTTONS */}
-            <div className="grid content-start grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-
+            <div className='grid content-start grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4'>
               {qrTypes.map((item) => {
                 const Icon = item.icon;
 
-                const isSelected =
-                  item.id === type;
+                const isSelected = item.id === type;
 
-                const isHovered =
-                  item.id === hoveredType;
+                const isHovered = item.id === hoveredType;
 
                 return (
                   <button
                     key={item.id}
-                    type="button"
+                    type='button'
                     onClick={() => select(item.id)}
-                    onMouseEnter={() =>
-                      setHoveredType(item.id)
-                    }
-                    onMouseLeave={() =>
-                      setHoveredType(null)
-                    }
-                    onFocus={() =>
-                      setHoveredType(item.id)
-                    }
-                    onBlur={() =>
-                      setHoveredType(null)
-                    }
+                    onMouseEnter={() => setHoveredType(item.id)}
+                    onMouseLeave={() => setHoveredType(null)}
+                    onFocus={() => setHoveredType(item.id)}
+                    onBlur={() => setHoveredType(null)}
                     aria-pressed={isSelected}
                     className={`group relative flex min-h-24 flex-col items-center justify-center overflow-hidden rounded-2xl border bg-white px-3 py-4 text-center transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                       isSelected
@@ -367,13 +371,10 @@ export default function QrBuilder({ id }) {
                         : "border-slate-200"
                     }`}
                   >
-
                     {/* Green top indicator */}
                     <span
                       className={`absolute inset-x-0 top-0 h-1 bg-[#20c75a] transition-opacity ${
-                        isSelected || isHovered
-                          ? "opacity-100"
-                          : "opacity-0"
+                        isSelected || isHovered ? "opacity-100" : "opacity-0"
                       }`}
                     />
 
@@ -385,18 +386,13 @@ export default function QrBuilder({ id }) {
                           : "bg-emerald-50 text-emerald-600"
                       }`}
                     >
-                      <Icon
-                        size={20}
-                        strokeWidth={2}
-                      />
+                      <Icon size={20} strokeWidth={2} />
                     </span>
 
                     {/* Label only — no long description */}
                     <span
                       className={`text-sm font-bold leading-tight ${
-                        isSelected
-                          ? "text-[#20c75a]"
-                          : "text-slate-900"
+                        isSelected ? "text-[#20c75a]" : "text-slate-900"
                       }`}
                     >
                       {item.label}
@@ -404,57 +400,35 @@ export default function QrBuilder({ id }) {
                   </button>
                 );
               })}
-
             </div>
 
             {/* =====================================================
                 DESKTOP PHONE PREVIEW
                 ===================================================== */}
 
-            <aside className="hidden lg:sticky lg:top-6 lg:block">
-
-              <div className="flex justify-center overflow-hidden rounded-[28px] border border-slate-100 bg-white/70 px-2 py-4 shadow-sm">
-
+            <aside className='hidden lg:sticky lg:top-6 lg:block'>
+              <div className='flex justify-center overflow-hidden rounded-[28px] border border-slate-100 bg-white/70 px-2 py-4 shadow-sm'>
                 {/*
                  * Scale the existing phone preview slightly so it
                  * doesn't make the page too tall on laptop screens.
                  */}
-                <div className="origin-top scale-[0.88] xl:scale-[0.94]">
-
+                <div className='origin-top scale-[0.88] xl:scale-[0.94]'>
                   <QrPhonePreview
                     type={previewType}
                     content={previewContent}
-                    design={
-                      previewType === type
-                        ? design
-                        : {}
-                    }
-                    valid={
-                      previewType === type
-                        ? !validation
-                        : false
-                    }
-                    qrUrl={
-                      previewType === type
-                        ? payload
-                        : ""
-                    }
+                    design={previewType === type ? design : {}}
+                    valid={previewType === type ? !validation : false}
+                    qrUrl={previewType === type ? payload : ""}
                     busy={busy}
-                    onPrepare={
-                      previewType === type
-                        ? save
-                        : undefined
-                    }
+                    onPrepare={previewType === type ? save : undefined}
                   />
-
                 </div>
               </div>
 
               {/* Currently previewed type */}
-              <p className="mt-2 text-center text-sm font-semibold text-slate-700">
+              <p className='mt-2 text-center text-sm font-semibold text-slate-700'>
                 {previewItem.label}
               </p>
-
             </aside>
 
             {/* =====================================================
@@ -464,7 +438,6 @@ export default function QrBuilder({ id }) {
             {/* <div className="lg:hidden">
               {preview}
             </div> */}
-
           </div>
         )}
 
@@ -473,56 +446,33 @@ export default function QrBuilder({ id }) {
             ========================================================= */}
 
         {step === 2 && (
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]'>
+            <div className='space-y-4'>
+              <QrContentForm type={type} value={content} onChange={update} />
 
-            <div className="space-y-4">
+              <section className='space-y-4 rounded-2xl border bg-white p-5'>
+                <Field label='QR code name' value={name} onChange={setName} />
 
-              <QrContentForm
-                type={type}
-                value={content}
-                onChange={update}
-              />
-
-              <section className="space-y-4 rounded-2xl border bg-white p-5">
-
-                <Field
-                  label="QR code name"
-                  value={name}
-                  onChange={setName}
-                />
-
-                <label className="block text-sm font-medium">
+                <label className='block text-sm font-medium'>
                   Folder
-
                   <select
                     value={folderId}
-                    onChange={(e) =>
-                      setFolderId(e.target.value)
-                    }
-                    className="mt-2 block w-full rounded-xl border p-3"
+                    onChange={(e) => setFolderId(e.target.value)}
+                    className='mt-2 block w-full rounded-xl border p-3'
                   >
-                    <option value="">
-                      No folder
-                    </option>
+                    <option value=''>No folder</option>
 
                     {folders.map((f) => (
-                      <option
-                        key={f._id}
-                        value={f._id}
-                      >
+                      <option key={f._id} value={f._id}>
                         {f.name}
                       </option>
                     ))}
                   </select>
                 </label>
-
               </section>
 
               {validation && (
-                <p
-                  role="status"
-                  className="text-sm text-slate-500"
-                >
+                <p role='status' className='text-sm text-slate-500'>
                   {validation}
                 </p>
               )}
@@ -531,26 +481,20 @@ export default function QrBuilder({ id }) {
                 <button
                   disabled={busy || !!validation}
                   onClick={save}
-                  className="action"
+                  className='action'
                 >
-                  {busy
-                    ? "Saving…"
-                    : "Save content for live scans"}
+                  {busy ? "Saving…" : "Save content for live scans"}
                 </button>
               )}
-
             </div>
 
             {/* Desktop preview */}
-            <aside className="hidden self-start lg:sticky lg:top-6 lg:block">
+            <aside className='hidden self-start lg:sticky lg:top-6 lg:block'>
               {preview}
             </aside>
 
             {/* Mobile preview */}
-            <MobilePreview>
-              {preview}
-            </MobilePreview>
-
+            <MobilePreview>{preview}</MobilePreview>
           </div>
         )}
 
@@ -560,35 +504,22 @@ export default function QrBuilder({ id }) {
 
         {step === 3 && (
           <>
-            <p className="mb-4 text-sm text-amber-700">
+            <p className='mb-4 text-sm text-amber-700'>
               {contrastWarning(design)}
             </p>
 
-            <QrDesignForm
-              url={payload}
-              value={design}
-              onChange={setDesign}
-            />
-             {/* Mobile preview button/modal */}
-    <MobilePreview>
-      {preview}
-    </MobilePreview>
+            <QrDesignForm url={payload} value={design} onChange={setDesign} />
+            {/* Mobile preview button/modal */}
+            <MobilePreview>{preview}</MobilePreview>
           </>
         )}
-
-        
-
 
         {/* =========================================================
             STEP 4 — DOWNLOAD
             ========================================================= */}
 
         {step === 4 && saved && (
-          <QrDownload
-            qr={saved}
-            data={payload}
-            design={design}
-          />
+          <QrDownload qr={saved} data={payload} design={design} />
         )}
 
         {/* =========================================================
@@ -596,14 +527,11 @@ export default function QrBuilder({ id }) {
             ========================================================= */}
 
         {step > 1 && (
-          <div className="mt-8 flex items-center justify-between border-t pt-6">
-
+          <div className='mt-8 flex items-center justify-between border-t pt-6'>
             <button
               disabled={busy}
-              className="action"
-              onClick={() =>
-                setStep(step - 1)
-              }
+              className='action'
+              onClick={() => setStep(step - 1)}
             >
               Back
             </button>
@@ -611,7 +539,7 @@ export default function QrBuilder({ id }) {
             {step < 4 && (
               <button
                 disabled={busy || !!validation}
-                className="rounded-xl bg-[#20c75a] px-6 py-3 font-semibold text-white disabled:opacity-40"
+                className='rounded-xl bg-[#20c75a] px-6 py-3 font-semibold text-white disabled:opacity-40'
                 onClick={async () => {
                   if (await save()) {
                     setStep(step + 1);
@@ -625,10 +553,8 @@ export default function QrBuilder({ id }) {
                     : "Save & Download"}
               </button>
             )}
-
           </div>
         )}
-
       </div>
     </main>
   );

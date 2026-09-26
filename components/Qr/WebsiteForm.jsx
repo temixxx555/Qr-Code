@@ -165,6 +165,7 @@ const WebsiteForm = ({ value, onChange, embedded = false }) => {
 
         <FormSection
           icon={QrCode}
+          required
           title="Name of the QR Code"
           description="Give a name to your QR code."
           open={openSections.name}
@@ -186,6 +187,13 @@ const WebsiteForm = ({ value, onChange, embedded = false }) => {
                 placeholder="E.g. My QR code"
                 className="h-11 border-gray-200 bg-white text-sm shadow-none placeholder:text-gray-400 focus-visible:ring-[#20c75a]"
               />
+
+                  {/* Required */}
+              {urlTouched && !qrName && (
+                <p className="mt-2 text-xs text-red-500">
+                  This field is required.
+                </p>
+              )}
             </div>
           </div>
         </FormSection>

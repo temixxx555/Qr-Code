@@ -45,6 +45,7 @@ export async function GET() {
           name: user.name,
           email: user.email,
           isVerified: user.isVerified,
+          adminRole: user.adminRole || "none",
         },
       },
       { status: 200 }

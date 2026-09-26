@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { premiumGate } from "@/app/lib/billing/access";
 import QRCode from "@/app/models/QrCode";
 import Scan from "@/app/models/Scan";
 import ScanVisitor from "@/app/models/ScanVisitor";
@@ -19,9 +20,20 @@ async function owned(id) {
       error: Response.json({ message: "QR not found" }, { status: 404 }),
     };
   await connectDB();
+  if (user.suspended)
+    return {
+      error: Response.json(
+        { message: "This account is suspended. Contact support." },
+        { status: 403 },
+      ),
+    };
   const qr = await QRCode.findOne({ _id: id, userId: user.userId }).select(
     "+passwordHash",
   );
+  if (qr && qr.type !== "wifi") {
+    const error = await premiumGate(user.userId);
+    if (error) return { error };
+  }
   return qr
     ? { qr, user }
     : { error: Response.json({ message: "QR not found" }, { status: 404 }) };
@@ -38,7 +50,12 @@ export async function PATCH(request, { params }) {
   try {
     const { qr, user, error } = await owned((await params).id);
     if (error) return error;
-    await applyQrBody(qr, await request.json(), user.userId);
+    const body = await request.json();
+    if (body.folderId) {
+      const gate = await premiumGate(user.userId);
+      if (gate) return gate;
+    }
+    await applyQrBody(qr, body, user.userId);
     await qr.save();
     return Response.json({ success: true, qrCode: serializeQr(qr) });
   } catch (e) {

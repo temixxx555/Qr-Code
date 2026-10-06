@@ -89,8 +89,15 @@ export default function BillingDashboard() {
       {message && <Notice>{message}</Notice>}
       {!data ? (
         <Card>
-          <p>Loading your membership…</p>
-          <button className={`${secondary} mt-4`} onClick={() => run(load)}>
+          <div className='flex flex-col items-center justify-center py-6'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <p className='mt-3'>Loading your membership…</p>
+          </div>
+
+          <button
+            className={`${secondary} mt-4 w-full`}
+            onClick={() => run(load)}
+          >
             Try again
           </button>
         </Card>
@@ -207,7 +214,7 @@ export default function BillingDashboard() {
                     }}
                   />
                 </Field>
-                <label className='flex items-start gap-3 rounded-xl bg-slate-50 p-4 text-sm'>
+                {/* <label className='flex items-start gap-3 rounded-xl bg-slate-50 p-4 text-sm'>
                   <input
                     type='checkbox'
                     checked={recurring}
@@ -234,7 +241,7 @@ export default function BillingDashboard() {
                       Leave unchecked for a one-time payment.
                     </span>
                   </span>
-                </label>
+                </label> */}
                 {!quote ? (
                   <button
                     className={button}

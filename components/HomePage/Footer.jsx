@@ -299,23 +299,12 @@ export default function Footer() {
             '
           >
             <p className='text-xs leading-5 text-white/50'>
-              2026 &copy; Online QR Generator. All rights reserved.
+              2026 &copy;  SmartQR. All rights reserved.
             </p>
 
-            <a
-              href='https://wa.me/2349138721435'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='
-                text-xs
-                font-medium
-                text-white/50
-                transition-colors
-                hover:text-[#22c55e]
-              '
-            >
-              Powered by Adex
-            </a>
+         
+              Powered by Erebun Solutions
+        
           </div>
         </div>
       </footer>

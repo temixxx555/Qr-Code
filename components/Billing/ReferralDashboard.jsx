@@ -38,13 +38,13 @@ export default function ReferralDashboard() {
   }
   const total = (state) => data?.totals?.[state] || 0;
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className='mx-auto max-w-5xl space-y-6'>
       <header>
-        <p className="text-sm font-semibold text-emerald-600">GROW TOGETHER</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900">
+        <p className='text-sm font-semibold text-emerald-600'>GROW TOGETHER</p>
+        <h1 className='mt-2 text-3xl font-bold text-slate-900'>
           Referral earnings
         </h1>
-        <p className="mt-2 text-slate-500">
+        <p className='mt-2 text-slate-500'>
           Share Smart QR. Earn when someone makes a qualifying purchase.
         </p>
       </header>
@@ -52,20 +52,27 @@ export default function ReferralDashboard() {
       {message && <Notice>{message}</Notice>}
       {!data ? (
         <Card>
-          <p>Loading earnings…</p>
-          <button className={`${secondary} mt-4`} onClick={() => run(load)}>
+          <div className='flex flex-col items-center justify-center py-6'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-current border-t-transparent' />
+            <p className='mt-3'>Loading earnings…</p>
+          </div>
+
+          <button
+            className={`${secondary} mt-4 w-full`}
+            onClick={() => run(load)}
+          >
             Try again
           </button>
         </Card>
       ) : (
         <>
-          <Card title="Your invitation">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+          <Card title='Your invitation'>
+            <div className='flex flex-wrap items-center justify-between gap-4'>
               <div>
-                <p className="text-2xl font-bold tracking-widest text-emerald-700">
+                <p className='text-2xl font-bold tracking-widest text-emerald-700'>
                   {data.code}
                 </p>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className='mt-2 text-sm text-slate-500'>
                   Your friend saves {data.policy.discountBps / 100}% on their
                   first payment. You earn {data.policy.commissionBps / 100}% of
                   the discounted amount.
@@ -86,7 +93,7 @@ export default function ReferralDashboard() {
                 Copy referral link
               </button>
             </div>
-            <p className="mt-5 text-xs leading-5 text-slate-500">
+            <p className='mt-5 text-xs leading-5 text-slate-500'>
               Earnings become available after {data.policy.holdDays} days.
               Refunds adjust commissions.{" "}
               {data.policy.renewalCommissions
@@ -98,7 +105,7 @@ export default function ReferralDashboard() {
                 : "Your code is currently disabled. Contact support."}
             </p>
           </Card>
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className='grid gap-4 sm:grid-cols-4'>
             {[
               ["Pending", "pending"],
               ["Available before adjustments", "available"],
@@ -106,14 +113,14 @@ export default function ReferralDashboard() {
               ["Paid, net of reversals", "paid"],
             ].map(([label, state]) => (
               <Card key={state}>
-                <p className="text-xs text-slate-500">{label}</p>
-                <p className="mt-3 text-2xl font-bold">{money(total(state))}</p>
+                <p className='text-xs text-slate-500'>{label}</p>
+                <p className='mt-3 text-2xl font-bold'>{money(total(state))}</p>
               </Card>
             ))}
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card title="Receive your earnings">
-              <p className="text-sm text-slate-500">
+          <div className='grid gap-6 md:grid-cols-2'>
+            <Card title='Receive your earnings'>
+              <p className='text-sm text-slate-500'>
                 {data.bank?.label || "Add a verified Nigerian bank account."}
               </p>
               {!banks.length ? (
@@ -133,7 +140,7 @@ export default function ReferralDashboard() {
                 </button>
               ) : (
                 <form
-                  className="mt-4 space-y-4"
+                  className='mt-4 space-y-4'
                   onSubmit={(e) => {
                     e.preventDefault();
                     run(async () => {
@@ -148,14 +155,14 @@ export default function ReferralDashboard() {
                     });
                   }}
                 >
-                  <Field label="Bank">
+                  <Field label='Bank'>
                     <select
                       className={input}
                       value={bankCode}
                       onChange={(e) => setBankCode(e.target.value)}
                       required
                     >
-                      <option value="">Choose your bank</option>
+                      <option value=''>Choose your bank</option>
                       {banks.map((bank) => (
                         <option value={bank.code} key={bank.code}>
                           {bank.name}
@@ -163,11 +170,11 @@ export default function ReferralDashboard() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Account number">
+                  <Field label='Account number'>
                     <input
                       className={input}
-                      inputMode="numeric"
-                      pattern="[0-9]{10}"
+                      inputMode='numeric'
+                      pattern='[0-9]{10}'
                       maxLength={10}
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
@@ -180,8 +187,8 @@ export default function ReferralDashboard() {
                 </form>
               )}
             </Card>
-            <Card title="Request a withdrawal">
-              <p className="text-sm leading-6 text-slate-500">
+            <Card title='Request a withdrawal'>
+              <p className='text-sm leading-6 text-slate-500'>
                 {data.policy.minimumWithdrawal
                   ? `Minimum: ${money(data.policy.minimumWithdrawal)}. Requests are reviewed before payout. Any outstanding refund adjustments are deducted first.`
                   : "Withdrawals open once the administrator sets the minimum payout. Your earnings remain recorded."}
@@ -202,60 +209,60 @@ export default function ReferralDashboard() {
               </button>
             </Card>
           </div>
-          <Card title="Earnings ledger">
-            <div className="divide-y">
+          <Card title='Earnings ledger'>
+            <div className='divide-y'>
               {!data.ledger.length && (
-                <p className="py-7 text-center text-sm text-slate-500">
+                <p className='py-7 text-center text-sm text-slate-500'>
                   Your first referral payment will appear here.
                 </p>
               )}
               {data.ledger.map((row) => (
                 <div
                   key={row._id}
-                  className="flex flex-wrap justify-between gap-3 py-4 text-sm"
+                  className='flex flex-wrap justify-between gap-3 py-4 text-sm'
                 >
                   <div>
-                    <p className="font-medium">
+                    <p className='font-medium'>
                       Referral payment · {money(row.amount)}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className='mt-1 text-xs text-slate-500'>
                       <DateText value={row.createdAt} /> · Available{" "}
                       <DateText value={row.availableAt} />
                     </p>
                     {row.reversedAmount > 0 && (
-                      <p className="mt-1 text-red-700">
+                      <p className='mt-1 text-red-700'>
                         Refund adjustment: −{money(row.reversedAmount)}
                       </p>
                     )}
                   </div>
-                  <span className="capitalize text-emerald-700">
+                  <span className='capitalize text-emerald-700'>
                     {row.state}
                   </span>
                 </div>
               ))}
             </div>
           </Card>
-          <Card title="Withdrawal history">
+          <Card title='Withdrawal history'>
             {!data.withdrawals.length && (
-              <p className="text-sm text-slate-500">No withdrawals yet.</p>
+              <p className='text-sm text-slate-500'>No withdrawals yet.</p>
             )}
             {data.withdrawals.map((row) => (
               <div
-                className="flex flex-wrap justify-between gap-3 border-b py-4 text-sm"
+                className='flex flex-wrap justify-between gap-3 border-b py-4 text-sm'
                 key={row._id}
               >
                 <div>
-                  <p className="font-medium">
+                  <p className='font-medium'>
                     {money(row.amount)} · {row.bankLabel}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className='mt-1 text-xs text-slate-500'>
                     <DateText value={row.createdAt} />
                   </p>
                   {row.reason && (
-                    <p className="mt-1 text-slate-500">{row.reason}</p>
+                    <p className='mt-1 text-slate-500'>{row.reason}</p>
                   )}
                 </div>
-                <span className="capitalize">{row.state}</span>
+                <span className='capitalize'>{row.state}</span>
               </div>
             ))}
           </Card>

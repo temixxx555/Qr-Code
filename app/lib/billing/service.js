@@ -125,11 +125,7 @@ export async function initializeCheckout(request, body) {
         "Manage your existing automatic subscription before starting another checkout.",
         409,
       );
-    if (new Date(current?.paidThrough) > new Date())
-      throw new BillingError(
-        "Your paid period is still active. You can renew when it expires.",
-        409,
-      );
+
     if (current?.providerCode)
       await Subscription.updateOne(
         { _id: current._id },
@@ -152,10 +148,22 @@ export async function initializeCheckout(request, body) {
         String(pending.referrerId || "") === String(pricing.referrerId || "")
       )
         return pending;
-      throw new BillingError(
-        "A checkout is already pending. Verify or resolve it before starting another payment.",
-        409,
+
+      // User chose something different, so abandon the old checkout
+      await Order.updateOne(
+        { _id: pending._id, status: "pending" },
+        {
+          $set: {
+            status: "cancelled",
+            cancelledAt: new Date(),
+          },
+        },
+        { session },
       );
+      // throw new BillingError(
+      //   "A checkout is already pending. Verify or resolve it before starting another payment.",
+      //   409,
+      // );
     }
     const [created] = await Order.create(
       [
@@ -216,8 +224,14 @@ export async function fulfill(reference, mode, ownerId) {
     mode,
   );
   if (payment.status === "failed" && order.status === "pending") {
-    await Order.updateOne({ _id: order._id, status: "pending" }, { status: "failed" });
-    throw new BillingError("Paystack confirmed this payment failed. You can start a new checkout.", 409);
+    await Order.updateOne(
+      { _id: order._id, status: "pending" },
+      { status: "failed" },
+    );
+    throw new BillingError(
+      "Paystack confirmed this payment failed. You can start a new checkout.",
+      409,
+    );
   }
   if (payment.status !== "success")
     throw new BillingError(
@@ -233,7 +247,11 @@ export async function fulfill(reference, mode, ownerId) {
     );
     const current = await Order.findById(order._id).session(session);
     if (current.status === "paid") return;
-    const firstSuccessfulPayment = !(await Order.exists({ workspaceId: order.workspaceId, mode, status: "paid" }).session(session));
+    const firstSuccessfulPayment = !(await Order.exists({
+      workspaceId: order.workspaceId,
+      mode,
+      status: "paid",
+    }).session(session));
     const subscription = await Subscription.findOne({
       workspaceId: order.workspaceId,
       mode,
@@ -280,7 +298,11 @@ export async function fulfill(reference, mode, ownerId) {
       },
       { upsert: true, session },
     );
-    if (order.referrerId && ((order.firstPayment && firstSuccessfulPayment) || (!order.firstPayment && order.referralPolicy.renewalCommissions))) {
+    if (
+      order.referrerId &&
+      ((order.firstPayment && firstSuccessfulPayment) ||
+        (!order.firstPayment && order.referralPolicy.renewalCommissions))
+    ) {
       await Commission.create(
         [
           {

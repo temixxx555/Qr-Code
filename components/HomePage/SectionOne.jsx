@@ -34,7 +34,7 @@ export default function HeroSection() {
         <div className='mt-6 w-full max-w-295 sm:mt-10 lg:mt-14'>
           <div className='relative aspect-video overflow-hidden rounded-xl bg-white shadow-sm sm:rounded-2xl'>
             <Image
-              src='/Home-banner.png'
+              src='/qr.jpg'
               alt='QR Generator dashboard'
               fill
               priority

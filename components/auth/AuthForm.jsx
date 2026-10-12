@@ -170,8 +170,7 @@ export default function AuthForm({ mode }) {
               </div>
 
               <div className='leading-tight'>
-                <p className='text-sm font-medium text-white/70'>Online</p>
-                <p className='text-lg font-semibold'>QR Generator</p>
+                <p className='text-lg font-semibold'>SmartQR </p>
               </div>
             </Link>
 
@@ -192,7 +191,7 @@ export default function AuthForm({ mode }) {
             </div>
 
             <p className='text-xs text-white/55'>
-              © {new Date().getFullYear()} Online QR Generator
+              © {new Date().getFullYear()} SmartQR 
             </p>
           </div>
         </section>

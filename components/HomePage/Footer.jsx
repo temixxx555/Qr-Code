@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { FaGithub, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
 
 const QRLogo = () => {
   return (
@@ -63,14 +64,19 @@ const serviceLinks = [
 ];
 
 const companyLinks = [
-  { label: "Terms & Conditions", href: "/faq" },
-  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Help Center", href: "/faq" },
+  { label: "Contact Us", href: "/contact" },
+  { label: "Terms", href: "/faq" },
+  { label: "Report Abuse", href: "/contact" },
+  { label: "Refund Policy", href: "/pricing" },
 ];
 
 const helpLinks = [
-  { label: "Contact Us", href: "/contact" },
+  { label: "Terms & Conditions", href: "/faq" },
   { label: "FAQ", href: "/faq" },
+  { label: "Disclamer", href: "/faq" },
   { label: "Cancel subscription", href: "/dashboard/billing" },
+  { label: "Privacy Policy", href: "/faq" },
 ];
 
 function FooterColumn({ title, links }) {
@@ -219,6 +225,7 @@ export default function Footer() {
             '
           >
             {/* Brand */}
+
             <div className='col-span-2 sm:col-span-1'>
               <Link href='/' className='inline-flex'>
                 <QRLogo />
@@ -227,6 +234,42 @@ export default function Footer() {
               <p className='mt-4 max-w-[230px] text-sm leading-6 text-white/50'>
                 Create, customize, manage and track smarter QR codes.
               </p>
+
+              <p className='mt-4  text-sm leading-6 text-white/50'>
+                Follow Us
+              </p>
+              {/* Social media icons */}
+              <div className='mt-2 flex items-center gap-4'>
+                <Link
+                  href='https://linkedin.com/in/YOUR_USERNAME'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  aria-label='LinkedIn'
+                  className='text-white/50 transition-colors hover:text-white'
+                >
+                  <FaLinkedin size={19} />
+                </Link>
+
+                <Link
+                  href='https://instagram.com/YOUR_USERNAME'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  aria-label='Instagram'
+                  className='text-white/50 transition-colors hover:text-white'
+                >
+                  <FaInstagram size={19} />
+                </Link>
+
+                <Link
+                  href='https://x.com/YOUR_USERNAME'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  aria-label='X (Twitter)'
+                  className='text-white/50 transition-colors hover:text-white'
+                >
+                  <FaTwitter size={19} />
+                </Link>
+              </div>
             </div>
 
             <FooterColumn title='Service' links={serviceLinks} />
@@ -299,12 +342,9 @@ export default function Footer() {
             '
           >
             <p className='text-xs leading-5 text-white/50'>
-              2026 &copy;  SmartQR. All rights reserved.
+              2026 &copy; SmartQR. All rights reserved.
             </p>
-
-         
-              Powered by Erebun Solutions
-        
+            Powered by Erebun Solutions
           </div>
         </div>
       </footer>

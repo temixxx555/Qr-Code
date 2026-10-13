@@ -7,6 +7,16 @@ const ScanSchema = new mongoose.Schema(
     os: String,
     browser: String,
     country: String,
+    // Approximate, network-derived location (city level, not GPS).
+    region: String,
+    city: String,
+    postalCode: String,
+    latitude: Number,
+    longitude: Number,
+    timezone: String,
+    brand: String,
+    language: String,
+    isNewVisitor: Boolean,
     // Which QR code was scanned
     qrCodeId: {
       type: mongoose.Schema.Types.ObjectId,

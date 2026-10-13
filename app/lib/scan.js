@@ -4,6 +4,7 @@ import ScanVisitor from "@/app/models/ScanVisitor";
 import crypto from "node:crypto";
 
 import Scan from "@/app/models/Scan";
+import { scanLocation, deviceBrand, language } from "@/lib/scan-details";
 import QRCode from "@/app/models/QrCode";
 
 export async function recordScan(qr, request, visitor) {
@@ -57,11 +58,13 @@ export async function recordScan(qr, request, visitor) {
       }
     }
 
-    // Country
-
     await Scan.create({
       qrCodeId: qr._id,
       visitorId: visitorHash,
+      isNewVisitor: first,
+      ...scanLocation(request),
+      brand: deviceBrand(ua),
+      language: language(request),
 
       // Device
       deviceType: /ipad|tablet/i.test(ua)
@@ -94,12 +97,6 @@ export async function recordScan(qr, request, visitor) {
               ? "Safari"
               : "Other",
 
-      country:
-        request.headers.get("x-vercel-ip-country") ||
-        request.headers.get("cf-ipcountry") ||
-        "Unknown",
-
-      // You were missing these
       userAgent: ua || null,
       ipAddress,
       referrer,

@@ -11,6 +11,9 @@ import {
   Share2,
   Play,
   Smartphone,
+  ShoppingBag,
+  Ticket,
+  Heart,
 } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 export const qrTypes = [
@@ -273,5 +276,55 @@ qrTypes.push(
     icon: Smartphone,
     description: "Help people find your app on their favorite store.",
   },
-
+  {
+    id: "product",
+    label: "Products",
+    icon: ShoppingBag,
+    title: "Products",
+    description:
+      "List your products with photos and prices so customers can browse and order.",
+    color: "#20c75a",
+    mockupBg: "#0f766e",
+    mockup: {
+      type: "product",
+      headline: "Ada's Boutique",
+      subline: "12 products",
+      body: "Browse the collection and order on WhatsApp in one tap.",
+      footer: "Shop Now",
+    },
+  },
+  {
+    id: "coupon",
+    label: "Coupon",
+    icon: Ticket,
+    title: "Coupon",
+    description:
+      "Give customers a free gift or discount coupon they can redeem in store or online.",
+    color: "#20c75a",
+    mockupBg: "#ea580c",
+    mockup: {
+      type: "coupon",
+      headline: "20% OFF",
+      subline: "Weekend special",
+      body: "Show this coupon at checkout to claim your discount.",
+      footer: "Redeem Offer",
+    },
+  },
+  {
+    id: "wedding",
+    label: "Wedding",
+    icon: Heart,
+    title: "Wedding",
+    description:
+      "Share your invitation, photo gallery, videos and a message to your well-wishers.",
+    color: "#20c75a",
+    mockupBg: "#9f1239",
+    mockup: {
+      type: "wedding",
+      headline: "Tolu & Kemi",
+      subline: "12 December 2026",
+      body: "Join us as we celebrate our wedding day.",
+      footer: "RSVP",
+    },
+  },
 );

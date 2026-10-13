@@ -10,6 +10,7 @@ import {
 } from "@/app/models/Billing";
 import { fulfill, transaction } from "./service";
 import { paystack } from "./paystack";
+import { planCharge } from "@/lib/billing-rules";
 import { refundCommission } from "@/lib/billing-rules";
 
 export function eventPayload(data) {
@@ -83,7 +84,7 @@ async function subscriptionEvent(event) {
       !Number.isFinite(end.getTime()) ||
       end <= start ||
       end - start > 370 * 86400000 ||
-      data.amount !== row.plan.amount
+      data.amount !== planCharge(row.plan).total
     )
       throw new Error("Invalid renewal period or amount");
     const initial = await Order.findOne({
@@ -103,7 +104,10 @@ async function subscriptionEvent(event) {
           mode,
           reference: data.transaction.reference,
           plan: row.plan,
-          amount: row.plan.amount,
+          amount: planCharge(row.plan).total,
+          subtotal: row.plan.amount,
+          vat: planCharge(row.plan).vat,
+          vatBps: row.plan.vatBps || 0,
           discount: 0,
           firstPayment: false,
           recurring: false,

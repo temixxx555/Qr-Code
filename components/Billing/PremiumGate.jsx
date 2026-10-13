@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/axios";
+import { money } from "@/lib/billing-rules";
 import { Card, button } from "./ui";
 export default function PremiumGate({ children }) {
   const path = usePathname();
@@ -45,6 +46,10 @@ export default function PremiumGate({ children }) {
       </Card>
     );
   if (result.premium) return children;
+  const amounts = (result.plans || [])
+    .map((plan) => plan.amount)
+    .filter(Number.isFinite);
+  const from = amounts.length ? ` · from ${money(Math.min(...amounts))}` : "";
   return (
     <div className="mx-auto mt-10 max-w-xl">
       <Card title="Bring your QR codes to life">
@@ -54,7 +59,7 @@ export default function PremiumGate({ children }) {
           are preserved.
         </p>
         <Link className={`${button} mt-6`} href="/dashboard/billing">
-          Explore Premium · from ₦3,000
+          Explore Premium{from}
         </Link>
         <Link className="mt-5 block text-sm text-emerald-700" href="/qr">
           Create a free static QR

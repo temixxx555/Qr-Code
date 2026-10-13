@@ -44,4 +44,27 @@ export const fixtures = {
     androidUrl: "https://play.google.com/store/apps/details?id=test",
   },
   coupon: { title: "September special", discount: "20% OFF", code: "SAVE20" },
+  product: {
+    name: "Ada's Boutique",
+    currency: "NGN",
+    whatsapp: "+2348012345678",
+    products: [
+      {
+        name: "Ankara dress",
+        price: "25000",
+        salePrice: "20000",
+        image: "https://example.com/dress.jpg",
+        available: true,
+      },
+    ],
+  },
+  wedding: {
+    partnerOne: "Tolu",
+    partnerTwo: "Kemi",
+    date: "2026-12-12",
+    time: "14:00",
+    images: [{ url: "https://example.com/couple.jpg", caption: "Us" }],
+    videos: [{ url: "https://example.com/film.mp4", title: "Our story" }],
+    schedule: [{ title: "Ceremony", time: "14:00" }],
+  },
 };

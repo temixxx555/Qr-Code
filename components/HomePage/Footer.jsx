@@ -1,6 +1,26 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { FaGithub, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaLinkedin,
+  FaTiktok,
+  FaYoutube,
+  FaWhatsapp,
+} from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
+import { Mail, Phone } from "lucide-react";
+import { SITE_DEFAULTS, SOCIAL_PLATFORMS } from "@/lib/site-content";
+
+const socialIcons = {
+  facebook: FaFacebook,
+  instagram: FaInstagram,
+  x: FaXTwitter,
+  linkedin: FaLinkedin,
+  tiktok: FaTiktok,
+  youtube: FaYoutube,
+  whatsapp: FaWhatsapp,
+};
 
 const QRLogo = () => {
   return (
@@ -109,7 +129,8 @@ function FooterColumn({ title, links }) {
   );
 }
 
-export default function Footer() {
+export default function Footer({ content = SITE_DEFAULTS }) {
+  const socials = SOCIAL_PLATFORMS.filter(([key]) => content.socials?.[key]);
   return (
     <>
       {/* CTA SECTION */}
@@ -157,7 +178,7 @@ export default function Footer() {
                     lg:leading-[1.08]
                   '
                   >
-                    Ready to get started?
+                    {content.footerCtaTitle}
                   </h2>
 
                   <p
@@ -171,9 +192,7 @@ export default function Footer() {
                     lg:text-lg
                   '
                   >
-                    Sign up today to build your customizable and fully trackable
-                    QR codes. Unlock advanced insights, implement your branding
-                    and make updates to your QR codes at any time.
+                    {content.footerCtaText}
                   </p>
                 </div>
               </Link>
@@ -232,44 +251,54 @@ export default function Footer() {
               </Link>
 
               <p className='mt-4 max-w-[230px] text-sm leading-6 text-white/50'>
-                Create, customize, manage and track smarter QR codes.
+                {content.footerTagline}
               </p>
 
-              <p className='mt-4  text-sm leading-6 text-white/50'>
-                Follow Us
-              </p>
-              {/* Social media icons */}
-              <div className='mt-2 flex items-center gap-4'>
-                <Link
-                  href='https://linkedin.com/in/YOUR_USERNAME'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label='LinkedIn'
-                  className='text-white/50 transition-colors hover:text-white'
-                >
-                  <FaLinkedin size={19} />
-                </Link>
+              {(content.contactEmail || content.contactPhone) && (
+                <div className='mt-4 space-y-2 text-sm text-white/60'>
+                  {content.contactEmail && (
+                    <a
+                      href={`mailto:${content.contactEmail}`}
+                      className='flex items-center gap-2 transition-colors hover:text-white'
+                    >
+                      <Mail className='h-4 w-4' /> {content.contactEmail}
+                    </a>
+                  )}
+                  {content.contactPhone && (
+                    <a
+                      href={`tel:${content.contactPhone.replace(/[^+\d]/g, "")}`}
+                      className='flex items-center gap-2 transition-colors hover:text-white'
+                    >
+                      <Phone className='h-4 w-4' /> {content.contactPhone}
+                    </a>
+                  )}
+                </div>
+              )}
 
-                <Link
-                  href='https://instagram.com/YOUR_USERNAME'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label='Instagram'
-                  className='text-white/50 transition-colors hover:text-white'
-                >
-                  <FaInstagram size={19} />
-                </Link>
-
-                <Link
-                  href='https://x.com/YOUR_USERNAME'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  aria-label='X (Twitter)'
-                  className='text-white/50 transition-colors hover:text-white'
-                >
-                  <FaTwitter size={19} />
-                </Link>
-              </div>
+              {socials.length > 0 && (
+                <>
+                  <p className='mt-4 text-sm leading-6 text-white/50'>
+                    Follow Us
+                  </p>
+                  <div className='mt-2 flex flex-wrap items-center gap-4'>
+                    {socials.map(([key, label]) => {
+                      const Icon = socialIcons[key];
+                      return (
+                        <a
+                          key={key}
+                          href={content.socials[key]}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          aria-label={label}
+                          className='text-white/50 transition-colors hover:text-white'
+                        >
+                          <Icon size={19} />
+                        </a>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
 
             <FooterColumn title='Service' links={serviceLinks} />
@@ -293,7 +322,7 @@ export default function Footer() {
               '
             >
               <p className='text-base font-medium leading-7 text-white sm:text-lg lg:text-xl'>
-                Generate, Manage &amp; Track your QR codes 👇
+                {content.footerRegisterText}
               </p>
 
               <Link
@@ -342,9 +371,11 @@ export default function Footer() {
             '
           >
             <p className='text-xs leading-5 text-white/50'>
-              2026 &copy; SmartQR. All rights reserved.
+              {new Date().getFullYear()} &copy; {content.copyright}
             </p>
-            Powered by Erebun Solutions
+            <p className='text-xs leading-5 text-white/50'>
+              {content.poweredBy}
+            </p>
           </div>
         </div>
       </footer>

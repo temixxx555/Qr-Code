@@ -12,6 +12,7 @@ import {
 import {
   PLANS,
   REFERRAL_DEFAULTS,
+  VAT_DEFAULT_BPS,
   hasPremium,
   subscriptionState,
 } from "@/lib/billing-rules";
@@ -76,6 +77,7 @@ export async function settings() {
   const row = await BillingSettings.findById("global").lean();
   return {
     maintenance: row?.maintenance || false,
+    vatBps: Number.isInteger(row?.vatBps) ? row.vatBps : VAT_DEFAULT_BPS,
     referral: { ...REFERRAL_DEFAULTS, ...row?.referral },
   };
 }

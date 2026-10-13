@@ -86,3 +86,53 @@ test("menu modes and unavailable item validation", () => {
     }),
   );
 });
+test("product, wedding, and coupon reject invalid content", () => {
+  const product = fixtures.product;
+  assert.ok(
+    validateContent("product", {
+      ...product,
+      products: [{ name: "Bag", price: -1 }],
+    }),
+  );
+  assert.ok(
+    validateContent("product", {
+      ...product,
+      products: [{ name: "Bag", price: 10, buyUrl: "javascript:alert(1)" }],
+    }),
+  );
+  assert.ok(
+    validateContent("product", {
+      ...product,
+      products: [{ name: { nested: true }, price: 10 }],
+    }),
+  );
+  assert.ok(validateContent("product", { ...product, whatsapp: "123" }));
+  assert.ok(
+    validateContent("product", {
+      ...product,
+      products: Array.from({ length: 101 }, () => ({ name: "A", price: 1 })),
+    }),
+  );
+  const wedding = fixtures.wedding;
+  assert.ok(validateContent("wedding", { ...wedding, partnerTwo: "" }));
+  assert.ok(validateContent("wedding", { ...wedding, date: "12/12/2026" }));
+  assert.ok(
+    validateContent("wedding", {
+      ...wedding,
+      videos: [{ url: "data:video/mp4;base64,AAAA" }],
+    }),
+  );
+  assert.ok(
+    validateContent("wedding", {
+      ...wedding,
+      images: Array.from({ length: 31 }, () => ({
+        url: "https://example.com/a.jpg",
+      })),
+    }),
+  );
+  assert.ok(validateContent("wedding", { ...wedding, schedule: [{}] }));
+  assert.equal(
+    validateContent("coupon", { kind: "free", title: "Gift", discount: "FREE" }),
+    null,
+  );
+});

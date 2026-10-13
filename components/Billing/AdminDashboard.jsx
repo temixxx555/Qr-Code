@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/axios";
-import { money } from "@/lib/billing-rules";
+import { money, withVat, vatLabel } from "@/lib/billing-rules";
 import { Card, Field, Notice, DateText, input, button, secondary } from "./ui";
+import SiteContentEditor from "./SiteContentEditor";
 const sections = [
   ["overview", "Overview"],
   ["users", "People"],
@@ -14,8 +15,15 @@ const sections = [
   ["withdrawals", "Withdrawals"],
   ["events", "Payment operations"],
   ["audit", "Audit trail"],
-  ["settings", "Plans & settings"],
+  ["settings", "Pricing & settings"],
+  ["content", "Site content"],
 ];
+// Current local time formatted for a datetime-local input.
+const localNow = () => {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 16);
+};
 export default function AdminDashboard() {
   const [overview, setOverview] = useState(null),
     [section, setSection] = useState("overview"),
@@ -33,19 +41,34 @@ export default function AdminDashboard() {
     [password, setPassword] = useState("");
   const [policy, setPolicy] = useState(null),
     [maintenance, setMaintenance] = useState(false),
+    [vatBps, setVatBps] = useState(750),
     [plan, setPlan] = useState({
       key: "monthly",
       amount: 300000,
       effectiveAt: "",
       testPlanCode: "",
       livePlanCode: "",
-    });
+    }),
+    [siteContent, setSiteContent] = useState(null);
+  const reviewRef = useRef(null);
   const load = useCallback(async () => {
     const { data } = await api.get("/admin/billing");
     setOverview(data);
     setPolicy(data.settings.referral);
     setMaintenance(data.settings.maintenance);
-    if (!["overview", "settings"].includes(section)) {
+    setVatBps(data.settings.vatBps);
+    setSiteContent(data.siteContent);
+    setPlan((current) =>
+      current.effectiveAt
+        ? current
+        : {
+            ...current,
+            amount:
+              data.plans.find((item) => item.key === current.key)?.amount ??
+              current.amount,
+          },
+    );
+    if (!["overview", "settings", "content"].includes(section)) {
       const result = await api.get("/admin/billing", {
         params: { resource: section, page, q: search },
       });
@@ -80,13 +103,22 @@ export default function AdminDashboard() {
     setPassword("");
     setReason("");
     setError("");
+    setTimeout(
+      () => reviewRef.current?.scrollIntoView({ behavior: "smooth" }),
+      0,
+    );
   }
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
     setError("");
     try {
-      await api.post("/admin/billing", { ...action, reason, password });
+      // Publish the latest draft, including edits made after opening review.
+      const payload =
+        action.action === "site-content"
+          ? { ...action, content: siteContent }
+          : action;
+      await api.post("/admin/billing", { ...payload, reason, password });
       setAction(null);
       setPassword("");
       setMessage("Operation recorded. Review the updated status below.");
@@ -152,6 +184,11 @@ export default function AdminDashboard() {
             )
             .filter(
               ([key]) =>
+                key !== "content" ||
+                ["superadmin", "finance"].includes(overview?.role),
+            )
+            .filter(
+              ([key]) =>
                 overview?.role !== "support" ||
                 ["overview", "users", "workspaces", "subscriptions"].includes(
                   key,
@@ -202,6 +239,7 @@ export default function AdminDashboard() {
                         ["QR codes", overview.metrics.qrCodes],
                         ["Collected payments", money(overview.metrics.gross)],
                         ["Refunds", money(overview.metrics.refunds)],
+                        ["VAT collected", money(overview.metrics.vat)],
                         [
                           "Recurring monthly value",
                           money(overview.metrics.mrr),
@@ -230,13 +268,35 @@ export default function AdminDashboard() {
                         excludes manual purchases, cancelled renewals,
                         complimentary access, and the other payment environment.
                         Referral commissions are separate from subscription
-                        revenue.
+                        revenue. Collected payments include VAT, which is
+                        also shown separately so you can remit it.
                       </p>
                     </Card>
                   </>
                 )}
                 {section === "settings" && policy && (
                   <>
+                    <Card title="VAT">
+                      <Field label="VAT rate added to plan prices (%)">
+                        <input
+                          className={input}
+                          type="number"
+                          min="0"
+                          max="50"
+                          step="0.01"
+                          value={vatBps / 100}
+                          onChange={(e) =>
+                            setVatBps(Math.round(Number(e.target.value) * 100))
+                          }
+                        />
+                      </Field>
+                      <p className="mt-3 text-xs leading-6 text-slate-500">
+                        Added at checkout on top of the plan price, after any
+                        referral discount. Existing automatic renewals keep the
+                        VAT rate they were bought with. Save with the
+                        Review settings change button below.
+                      </p>
+                    </Card>
                     <Card title="Referral programme">
                       <div className="grid gap-4 sm:grid-cols-2">
                         {[
@@ -310,6 +370,7 @@ export default function AdminDashboard() {
                             action: "settings",
                             referral: policy,
                             maintenance,
+                            vatBps,
                           })
                         }
                       >
@@ -327,6 +388,11 @@ export default function AdminDashboard() {
                             <p className="mt-1">
                               {money(item.amount)} · version {item.version}
                             </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              Customer pays{" "}
+                              {money(withVat(item.amount, vatBps).total)} incl.{" "}
+                              {vatLabel(vatBps)}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -336,7 +402,14 @@ export default function AdminDashboard() {
                             className={input}
                             value={plan.key}
                             onChange={(e) =>
-                              setPlan({ ...plan, key: e.target.value })
+                              setPlan({
+                                ...plan,
+                                key: e.target.value,
+                                amount:
+                                  overview.plans.find(
+                                    (item) => item.key === e.target.value,
+                                  )?.amount ?? plan.amount,
+                              })
                             }
                           >
                             {overview.plans.map((item) => (
@@ -364,14 +437,28 @@ export default function AdminDashboard() {
                           />
                         </Field>
                         <Field label="Effective from">
-                          <input
-                            className={input}
-                            type="datetime-local"
-                            value={plan.effectiveAt}
-                            onChange={(e) =>
-                              setPlan({ ...plan, effectiveAt: e.target.value })
-                            }
-                          />
+                          <div className="flex gap-2">
+                            <input
+                              className={input}
+                              type="datetime-local"
+                              value={plan.effectiveAt}
+                              onChange={(e) =>
+                                setPlan({
+                                  ...plan,
+                                  effectiveAt: e.target.value,
+                                })
+                              }
+                            />
+                            <button
+                              type="button"
+                              className={secondary}
+                              onClick={() =>
+                                setPlan({ ...plan, effectiveAt: localNow() })
+                              }
+                            >
+                              Now
+                            </button>
+                          </div>
                         </Field>
                         {[
                           ["testPlanCode", "Paystack test plan code"],
@@ -390,7 +477,12 @@ export default function AdminDashboard() {
                         ))}
                       </div>
                       <p className="mt-4 text-xs leading-6 text-slate-500">
-                        Create matching new plans in Paystack first. Existing
+                        Enter the price before VAT. For automatic renewal, the
+                        Paystack plan amount must include VAT:{" "}
+                        <strong>
+                          {money(withVat(plan.amount || 0, vatBps).total)}
+                        </strong>
+                        . Create matching new plans in Paystack first. Existing
                         subscriptions keep their original price. A blank
                         provider plan code means manual renewal only for this
                         version.
@@ -413,7 +505,18 @@ export default function AdminDashboard() {
                     </Card>
                   </>
                 )}
-                {!["overview", "settings"].includes(section) && (
+                {section === "content" && siteContent && (
+                  <SiteContentEditor
+                    value={siteContent}
+                    onChange={setSiteContent}
+                    plans={overview.plans}
+                    disabled={!superadmin}
+                    onReview={() =>
+                      choose({ action: "site-content", content: siteContent })
+                    }
+                  />
+                )}
+                {!["overview", "settings", "content"].includes(section) && (
                   <Card title={sections.find(([key]) => key === section)?.[1]}>
                     <form
                       className="mb-5 flex gap-2"
@@ -686,6 +789,7 @@ export default function AdminDashboard() {
             )
           )}
           {action && (
+            <div ref={reviewRef}>
             <Card title="Review and authorize">
               <form className="space-y-4" onSubmit={submit}>
                 <p className="text-sm text-slate-600">
@@ -775,6 +879,7 @@ export default function AdminDashboard() {
                 </div>
               </form>
             </Card>
+            </div>
           )}
         </main>
       </div>

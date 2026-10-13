@@ -12,6 +12,7 @@ import {
   cancelRenewal,
   quote,
 } from "@/app/lib/billing/service";
+import { planCharge } from "@/lib/billing-rules";
 import { Order } from "@/app/models/Billing";
 import { allowAttempt } from "@/app/lib/rate-limit";
 export async function GET() {
@@ -55,6 +56,7 @@ export async function GET() {
       },
       plans: catalog,
       referral: (await settings()).referral,
+      vatBps: (await settings()).vatBps,
       orders: await Order.find({
         workspaceId: ctx.workspace._id,
         mode: ctx.mode,
@@ -89,8 +91,11 @@ export async function POST(request) {
       );
       return Response.json({
         amount: value.amount,
+        subtotal: value.subtotal,
+        vat: value.vat,
+        vatBps: value.vatBps,
         discount: value.discount,
-        renewalAmount: value.plan.amount,
+        renewalAmount: planCharge(value.plan).total,
         version: value.plan.version,
         months: value.plan.months,
       });

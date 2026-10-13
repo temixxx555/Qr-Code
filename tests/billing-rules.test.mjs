@@ -10,6 +10,8 @@ import {
   subscriptionState,
   assertVerifiedPayment,
   refundCommission,
+  withVat,
+  planCharge,
 } from "../lib/billing-rules.js";
 import { verifyWebhookSignature } from "../lib/billing-security.js";
 import {
@@ -163,4 +165,21 @@ test("Personal and Business do not grant premium or administrator rights", () =>
   assert.equal(workspace.validateSync(), undefined);
   assert.equal(workspace.adminRole, undefined);
   assert.equal(workspace.premium, undefined);
+});
+test("VAT is added on top of the discounted price in exact kobo", () => {
+  assert.deepEqual(withVat(300000, 750), {
+    subtotal: 300000,
+    vat: 22500,
+    total: 322500,
+  });
+  // ₦3,000 less a 5% referral discount, then 7.5% VAT, rounded half-up.
+  assert.deepEqual(withVat(285000, 750), {
+    subtotal: 285000,
+    vat: 21375,
+    total: 306375,
+  });
+  assert.equal(withVat(333, 750).vat, 25);
+  assert.equal(planCharge({ amount: 2900000, vatBps: 750 }).total, 3117500);
+  // Subscriptions bought before VAT keep renewing at their original amount.
+  assert.equal(planCharge({ amount: 2900000 }).total, 2900000);
 });

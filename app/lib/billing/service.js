@@ -12,6 +12,8 @@ import {
   addMonths,
   percentage,
   assertVerifiedPayment,
+  withVat,
+  planCharge,
 } from "@/lib/billing-rules";
 import { context, plans, settings, BillingError } from "./access";
 import { paystack, secretKey } from "./paystack";
@@ -34,7 +36,8 @@ export async function transaction(callback) {
 export async function quote(workspace, mode, key, referralCode = "") {
   const plan = (await plans()).find((item) => item.key === key);
   if (!plan) throw new BillingError("Choose a valid billing period.");
-  const policy = (await settings()).referral;
+  const config = await settings();
+  const policy = config.referral;
   const firstPayment = !(await Order.exists({
     workspaceId: workspace._id,
     mode,
@@ -72,9 +75,14 @@ export async function quote(workspace, mode, key, referralCode = "") {
       throw new BillingError("You cannot refer yourself.");
   }
   const discount = referrer ? percentage(plan.amount, policy.discountBps) : 0;
+  // VAT is charged on the discounted price; amount is the total sent to Paystack.
+  const { subtotal, vat, total } = withVat(plan.amount - discount, config.vatBps);
   return {
-    plan,
-    amount: plan.amount - discount,
+    plan: { ...plan, vatBps: config.vatBps },
+    amount: total,
+    subtotal,
+    vat,
+    vatBps: config.vatBps,
     discount,
     firstPayment,
     referrerId: referrer?._id,
@@ -309,8 +317,9 @@ export async function fulfill(reference, mode, ownerId) {
             workspaceId: order.referrerId,
             orderId: order._id,
             mode,
+            // Commission is earned on the price before VAT.
             amount: percentage(
-              order.amount,
+              order.subtotal ?? order.amount,
               order.referralPolicy.commissionBps,
             ),
             availableAt: new Date(
@@ -363,7 +372,7 @@ export async function scheduleRenewal(orderId, mode) {
       mode,
     );
     if (
-      providerPlan.amount !== order.plan.amount ||
+      providerPlan.amount !== planCharge(order.plan).total ||
       providerPlan.currency !== "NGN" ||
       providerPlan.interval !== order.plan.interval
     ) {

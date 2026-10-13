@@ -31,6 +31,9 @@ import {
 } from "@/app/lib/billing/withdrawals";
 import { allowAttempt } from "@/app/lib/rate-limit";
 import { PLANS } from "@/lib/billing-rules";
+import SiteContent from "@/app/models/SiteContent";
+import { getSiteContent } from "@/app/lib/site-content";
+import { normalizeSiteContent } from "@/lib/site-content";
 const resources = {
   users: User,
   workspaces: Workspace,
@@ -55,6 +58,7 @@ export async function GET(request) {
             _id: null,
             gross: { $sum: "$amount" },
             refunds: { $sum: "$refundedAmount" },
+            vat: { $sum: { $ifNull: ["$vat", 0] } },
           },
         },
       ]);
@@ -88,6 +92,7 @@ export async function GET(request) {
           }),
           gross: cash?.gross || 0,
           refunds: cash?.refunds || 0,
+          vat: cash?.vat || 0,
           mrr: Math.round(recurring?.mrr || 0),
           failedEvents: await WebhookEvent.countDocuments({
             mode,
@@ -100,6 +105,7 @@ export async function GET(request) {
         },
         settings: await settings(),
         plans: await plans(),
+        siteContent: await getSiteContent(),
       });
     }
     const Model = resources[resource];
@@ -166,6 +172,7 @@ export async function POST(request) {
       "suspend",
       "complimentary",
       "referral-toggle",
+      "site-content",
     ];
     if (superOnly.includes(body.action) && actor.adminRole !== "superadmin")
       throw new BillingError("Superadmin access required.", 403);
@@ -214,6 +221,12 @@ export async function POST(request) {
           "Set a positive withdrawal minimum in kobo, or leave it unset.",
         );
       if (
+        !Number.isInteger(body.vatBps) ||
+        body.vatBps < 0 ||
+        body.vatBps > 5000
+      )
+        throw new BillingError("Set a VAT rate between 0% and 50%.");
+      if (
         typeof value.renewalCommissions !== "boolean" ||
         typeof body.maintenance !== "boolean"
       )
@@ -232,7 +245,7 @@ export async function POST(request) {
       await transaction(async (session) => {
         await BillingSettings.findOneAndUpdate(
           { _id: "global" },
-          { referral, maintenance: body.maintenance },
+          { referral, maintenance: body.maintenance, vatBps: body.vatBps },
           { upsert: true, session },
         );
         await AuditLog.create(
@@ -243,7 +256,39 @@ export async function POST(request) {
               resource: "global",
               reason,
               before,
-              after: { referral, maintenance: body.maintenance },
+              after: {
+                referral,
+                maintenance: body.maintenance,
+                vatBps: body.vatBps,
+              },
+            },
+          ],
+          { session },
+        );
+      });
+    } else if (body.action === "site-content") {
+      let content;
+      try {
+        content = normalizeSiteContent(body.content);
+      } catch (error) {
+        throw new BillingError(error.message);
+      }
+      const before = await getSiteContent();
+      await transaction(async (session) => {
+        await SiteContent.findOneAndUpdate(
+          { _id: "global" },
+          { content },
+          { upsert: true, session },
+        );
+        await AuditLog.create(
+          [
+            {
+              actorId: actor._id,
+              action: "site.content.update",
+              resource: "global",
+              reason,
+              before,
+              after: content,
             },
           ],
           { session },

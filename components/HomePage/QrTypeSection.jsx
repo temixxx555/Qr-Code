@@ -21,6 +21,9 @@ import {
   MapPin,
   Clock,
   Phone,
+  ShoppingBag,
+  Ticket,
+  Heart,
 } from "lucide-react";
 
 import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
@@ -216,6 +219,54 @@ const qrTypes = [
       subline: "8,204 followers",
       body: "Send foot traffic straight to your Instagram profile — great for storefronts, packaging, and print materials.",
       footer: "Follow on Instagram",
+    },
+  },
+  {
+    id: "product",
+    label: "Products",
+    icon: ShoppingBag,
+    mockupBg: "bg-[#0f766e]",
+    title: "Products",
+    description:
+      "Turn your catalogue into a mobile shop. List products with photos, prices and sale prices, and let customers order straight on WhatsApp.",
+    mockup: {
+      type: "product",
+      headline: "Ada's Boutique",
+      subline: "24 products · Order on WhatsApp",
+      body: "Browse new arrivals, filter by category and order your favourites in one tap.",
+      footer: "Shop Now",
+    },
+  },
+  {
+    id: "coupon",
+    label: "Coupon",
+    icon: Ticket,
+    mockupBg: "bg-[#ea580c]",
+    title: "Coupon",
+    description:
+      "Reward customers with free gifts or discounts. Add a code, an expiry date and redemption instructions — expired coupons switch off automatically.",
+    mockup: {
+      type: "coupon",
+      headline: "20% OFF",
+      subline: "Weekend special · Code SAVE20",
+      body: "Show this coupon at checkout or copy the code to redeem online.",
+      footer: "Redeem Offer",
+    },
+  },
+  {
+    id: "wedding",
+    label: "Wedding",
+    icon: Heart,
+    mockupBg: "bg-[#9f1239]",
+    title: "Wedding",
+    description:
+      "A beautiful wedding page for your invitation cards. Share the date, venue and programme, collect RSVPs, and post your photos, videos and a message to well-wishers.",
+    mockup: {
+      type: "wedding",
+      headline: "Tolu & Kemi",
+      subline: "Saturday, 12 December 2026",
+      body: "Join us as we celebrate our wedding day. Countdown, directions, gallery and RSVP in one scan.",
+      footer: "RSVP Now",
     },
   },
 ];
@@ -576,7 +627,9 @@ function PhoneMockup({ item }) {
             </>
           )}
 
-          {mockup.type === "website" && <StandardMockupBody item={item} />}
+          {["website", "product", "coupon", "wedding"].includes(mockup.type) && (
+            <StandardMockupBody item={item} />
+          )}
         </div>
       </div>
     </div>

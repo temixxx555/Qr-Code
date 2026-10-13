@@ -72,6 +72,9 @@ export const Order = model(
     plan: Schema.Types.Mixed,
     amount: integer,
     discount: integer,
+    subtotal: integer,
+    vat: integer,
+    vatBps: integer,
     currency: { type: String, default: "NGN" },
     status: { type: String, default: "pending" },
     checkoutUrl: String,
@@ -147,6 +150,7 @@ export const Withdrawal = model("AffiliateWithdrawal", {
 export const BillingSettings = model("BillingSettings", {
   _id: { type: String, default: "global" },
   referral: Schema.Types.Mixed,
+  vatBps: Number,
   maintenance: { type: Boolean, default: false },
 });
 export const AuditLog = model("BillingAuditLog", {

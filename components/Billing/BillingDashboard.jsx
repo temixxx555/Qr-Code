@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, ShieldCheck, CreditCard, ArrowRight } from "lucide-react";
 import api from "@/lib/axios";
-import { money } from "@/lib/billing-rules";
+import { money, vatLabel } from "@/lib/billing-rules";
 import { toast } from "sonner";
 import { Card, Field, Notice, DateText, input, button, secondary } from "./ui";
 export default function BillingDashboard() {
@@ -189,7 +189,8 @@ export default function BillingDashboard() {
                       {money(item.amount)}
                     </p>
                     <p className='mt-1 text-xs text-slate-500'>
-                      Total for {item.months}{" "}
+                      + {vatLabel(data.vatBps ?? 750)} · Total for{" "}
+                      {item.months}{" "}
                       {item.months === 1 ? "month" : "months"}
                     </p>
                     {plan === item.key && (
@@ -263,15 +264,26 @@ export default function BillingDashboard() {
                   </button>
                 ) : (
                   <div className='rounded-xl border border-emerald-200 p-5'>
-                    <div className='flex justify-between font-semibold'>
+                    <dl className='space-y-1.5 border-b border-slate-100 pb-3 text-sm text-slate-600'>
+                      <div className='flex justify-between'>
+                        <dt>Plan price</dt>
+                        <dd>{money(quote.subtotal + quote.discount)}</dd>
+                      </div>
+                      {quote.discount > 0 && (
+                        <div className='flex justify-between text-emerald-700'>
+                          <dt>Referral discount</dt>
+                          <dd>−{money(quote.discount)}</dd>
+                        </div>
+                      )}
+                      <div className='flex justify-between'>
+                        <dt>{vatLabel(quote.vatBps)}</dt>
+                        <dd>{money(quote.vat)}</dd>
+                      </div>
+                    </dl>
+                    <div className='mt-3 flex justify-between font-semibold'>
                       <span>Due today</span>
                       <span>{money(quote.amount)}</span>
                     </div>
-                    {quote.discount > 0 && (
-                      <p className='mt-2 text-sm text-emerald-700'>
-                        First-payment referral saving: {money(quote.discount)}
-                      </p>
-                    )}
                     <p className='mt-3 text-sm text-slate-500'>
                       {recurring
                         ? `Then ${money(quote.renewalAmount)} every ${quote.months} months. Your exact renewal date appears after payment.`

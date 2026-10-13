@@ -6,22 +6,27 @@ import SectionOne from "@/components/HomePage/SectionOne";
 import QrSection from "@/components/HomePage/QrSectiom";
 import CaraoselSection from "@/components/HomePage/CaraoselSection";
 import Footer from "@/components/HomePage/Footer";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import AnnouncementBar from "@/components/HomePage/AnnouncementBar";
 import GuestRoute from "@/components/auth/GuestRoute";
+import { getSiteContent } from "@/app/lib/site-content";
 
-export default function Home() {
+// Site content is edited by administrators, so render on each request.
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const content = await getSiteContent();
   return (
     <>
     <GuestRoute>
+      <AnnouncementBar content={content} />
       <Navbar />
-      <SectionOne />
+      <SectionOne content={content} />
       <HowItWorks />
       <FeaturesGrid />
       <QRTypesSection />
       <QrSection />
       <CaraoselSection />
-      <Footer />
+      <Footer content={content} />
       </GuestRoute>
     </>
   );

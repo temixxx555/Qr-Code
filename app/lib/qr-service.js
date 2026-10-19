@@ -22,6 +22,16 @@ export function publicOrigin(request) {
     );
   return new URL(url).origin;
 }
+// Origin from env only (no request needed), used to repair links on old records.
+function currentOrigin() {
+  try {
+    return new URL(
+      process.env.QR_PUBLIC_ORIGIN || process.env.NEXT_PUBLIC_APP_URL,
+    ).origin;
+  } catch {
+    return "";
+  }
+}
 export function serializeQr(doc) {
   const qr = doc.toObject ? doc.toObject() : { ...doc };
   qr.content = { ...qr.content };
@@ -30,7 +40,7 @@ export function serializeQr(doc) {
   return {
     ...qr,
     id: String(qr._id),
-    qrUrl: (qr.publicOrigin || "") + "/q/" + qr.shortCode,
+    qrUrl: (currentOrigin() || qr.publicOrigin || "") + "/q/" + qr.shortCode,
   };
 }
 export async function applyQrBody(qr, body, userId) {

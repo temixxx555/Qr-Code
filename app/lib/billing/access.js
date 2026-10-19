@@ -2,6 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { connectDB } from "@/app/lib/mongodb";
 import { getAuthenticatedUser } from "@/app/lib/auth";
+import { publicOrigin } from "@/app/lib/qr-service";
 import User from "@/app/models/User";
 import {
   Workspace,
@@ -45,8 +46,25 @@ export function billingError(error) {
   );
 }
 export function sameOrigin(request) {
-  const origin = request.headers.get("origin");
-  if (!origin || origin !== new URL(request.url).origin)
+  // Safe methods don't change state, so no origin check is needed.
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method)) return;
+
+  let origin = request.headers.get("origin");
+
+  // Some same-origin requests send only a Referer header.
+  if (!origin) {
+    try {
+      origin = new URL(request.headers.get("referer") || "").origin;
+    } catch {}
+  }
+
+  // Compare against the configured public domain, not the internal request.url.
+  let expected = null;
+  try {
+    expected = publicOrigin(request);
+  } catch {}
+
+  if (!origin || !expected || origin !== expected)
     throw new BillingError("Invalid request origin.", 403);
 }
 export async function billingUser() {

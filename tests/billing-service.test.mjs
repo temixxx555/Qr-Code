@@ -244,6 +244,30 @@ test("ambiguous subscription creation preserves paid access and never retries cr
     1,
   );
 });
+test("a placeholder plan value falls back to manual renewal instead of failing", async () => {
+  reset(true);
+  db.orders[0].plan.providerPlan = "3000";
+  await fulfill("qr_test_fixture", "test");
+  assert.equal(db.subscriptions[0].renewalState, "manual");
+  assert.equal(
+    providerCalls.filter((call) => call.path === "/subscription").length,
+    0,
+  );
+});
+test("a placeholder plan value resolves to the configured Paystack plan", async () => {
+  reset(true);
+  db.orders[0].plan.providerPlan = "3000";
+  process.env.PAYSTACK_TEST_PLAN_MONTHLY_V1 = "PLN_configured";
+  try {
+    await fulfill("qr_test_fixture", "test");
+  } finally {
+    delete process.env.PAYSTACK_TEST_PLAN_MONTHLY_V1;
+  }
+  const calls = providerCalls.filter((call) => call.path === "/subscription");
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].body.plan, "PLN_configured");
+  assert.equal(db.subscriptions[0].renewalState, "enabled");
+});
 test("cancellation does not truncate paid access or erase commission", async () => {
   reset(true);
   await fulfill("qr_test_fixture", "test");

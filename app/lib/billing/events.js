@@ -37,6 +37,40 @@ export function eventPayload(data) {
         : data.transaction),
   };
 }
+async function recordRenewal(row, reference, mode, period) {
+  const initial = await Order.findOne({
+    workspaceId: row.workspaceId,
+    mode,
+    status: "paid",
+    providerCustomer: row.providerCustomer,
+  }).sort({ paidAt: 1 });
+  if (!initial) throw new Error("Original purchase not found");
+  await Order.updateOne(
+    { reference, mode },
+    {
+      $setOnInsert: {
+        workspaceId: row.workspaceId,
+        userId: initial.userId,
+        email: initial.email,
+        mode,
+        reference,
+        plan: row.plan,
+        amount: planCharge(row.plan).total,
+        subtotal: row.plan.amount,
+        vat: planCharge(row.plan).vat,
+        vatBps: row.plan.vatBps || 0,
+        discount: 0,
+        firstPayment: false,
+        recurring: false,
+        ...period,
+        referrerId: initial.referrerId,
+        referralPolicy: initial.referralPolicy,
+      },
+    },
+    { upsert: true },
+  );
+  await fulfill(reference, mode);
+}
 async function subscriptionEvent(event) {
   const { payload: data, mode } = event;
   const code = data.subscription_code || data.subscription?.subscription_code;
@@ -87,40 +121,11 @@ async function subscriptionEvent(event) {
       !(data.amount >= planCharge(row.plan).total)
     )
       throw new Error("Invalid renewal period or amount");
-    const initial = await Order.findOne({
-      workspaceId: row.workspaceId,
-      mode,
-      status: "paid",
-      providerCustomer: row.providerCustomer,
-    }).sort({ paidAt: 1 });
-    if (!initial) throw new Error("Original purchase not found");
-    await Order.updateOne(
-      { reference: data.transaction.reference, mode },
-      {
-        $setOnInsert: {
-          workspaceId: row.workspaceId,
-          userId: initial.userId,
-          email: initial.email,
-          mode,
-          reference: data.transaction.reference,
-          plan: row.plan,
-          amount: planCharge(row.plan).total,
-          subtotal: row.plan.amount,
-          vat: planCharge(row.plan).vat,
-          vatBps: row.plan.vatBps || 0,
-          discount: 0,
-          firstPayment: false,
-          recurring: false,
-          providerPeriod: true,
-          periodStart: start,
-          periodEnd: end,
-          referrerId: initial.referrerId,
-          referralPolicy: initial.referralPolicy,
-        },
-      },
-      { upsert: true },
-    );
-    await fulfill(data.transaction.reference, mode);
+    await recordRenewal(row, data.transaction.reference, mode, {
+      providerPeriod: true,
+      periodStart: start,
+      periodEnd: end,
+    });
   }
   // Read the provider's current state rather than trusting the delivery order of events.
   const cancelled = [
@@ -243,7 +248,20 @@ export async function processEvent(id) {
         })
       )
         await fulfill(event.payload.reference, event.mode);
-      // Recurring charges are paired with invoice.update, which supplies the exact paid period.
+      else if (event.payload.plan?.plan_code) {
+        // A renewal charge. invoice.update normally records it with Paystack's exact
+        // period; if this arrives first, extend from the current paid-through date.
+        const row = await Subscription.findOne({
+          mode: event.mode,
+          providerCustomer: event.payload.customer?.customer_code,
+          "plan.providerPlan": event.payload.plan.plan_code,
+          providerCode: { $type: "string" },
+        });
+        if (!row) throw new Error("Renewal subscription not found");
+        await recordRenewal(row, event.payload.reference, event.mode, {
+          providerPeriod: false,
+        });
+      }
     } else if (
       [
         "subscription.create",

@@ -150,6 +150,8 @@ export async function initializeCheckout(request, body) {
         pending.plan.key === pricing.plan.key &&
         pending.recurring === body.recurring &&
         pending.amount === pricing.amount &&
+        (pending.plan.providerPlan || null) === providerPlan &&
+        new Date(pending.expiresAt) > new Date() &&
         String(pending.referrerId || "") === String(pricing.referrerId || "")
       )
         return pending;
@@ -333,14 +335,24 @@ export async function fulfill(reference, mode, ownerId) {
 }
 export async function scheduleRenewal(orderId, mode) {
   const order = await Order.findById(orderId).select("+authorizationCode");
+  if (!order || order.status !== "paid" || !order.recurring) return;
+  if (!/^PLN_/i.test(order.plan.providerPlan || "")) {
+    const current = (await plans()).find(
+      (item) =>
+        item.key === order.plan.key && item.version === order.plan.version,
+    );
+    const code = current && providerPlanCode(current, mode);
+    if (code) {
+      order.plan = { ...order.plan, providerPlan: code };
+      await Order.updateOne({ _id: orderId }, { "plan.providerPlan": code });
+      await Subscription.updateOne(
+        { renewalOrder: orderId, mode },
+        { "plan.providerPlan": code },
+      );
+    }
+  }
   if (
-    !order ||
-    order.status !== "paid" ||
-    !order.recurring ||
-    !order.plan.providerPlan
-  )
-    return;
-  if (
+    !/^PLN_/i.test(order.plan.providerPlan || "") ||
     !order.authorizationReusable ||
     !["card", "direct_debit"].includes(order.authorizationChannel)
   ) {
@@ -404,6 +416,59 @@ export async function scheduleRenewal(orderId, mode) {
       { renewalState: "uncertain" },
     );
   }
+}
+// Retries a renewal setup that timed out or was misconfigured. A timed-out create
+// may still have succeeded, so adopt an existing Paystack subscription first.
+export async function recoverRenewal(row, mode) {
+  const stuck = await Subscription.findOneAndUpdate(
+    {
+      _id: row._id,
+      renewalState: { $in: ["creating", "uncertain", "configuration_error"] },
+      updatedAt: { $lt: new Date(Date.now() - 10 * 60000) },
+      cancelAtPeriodEnd: false,
+    },
+    { renewalState: "uncertain" },
+    { new: true },
+  );
+  if (!stuck?.renewalOrder || !/^PLN_/i.test(stuck.plan?.providerPlan || ""))
+    return;
+  const customer = await paystack(
+    `/customer/${encodeURIComponent(stuck.providerCustomer)}`,
+    undefined,
+    mode,
+  );
+  const plan = await paystack(
+    `/plan/${encodeURIComponent(stuck.plan.providerPlan)}`,
+    undefined,
+    mode,
+  );
+  const existing = (
+    await paystack(
+      `/subscription?customer=${customer.id}&plan=${plan.id}`,
+      undefined,
+      mode,
+    )
+  ).find(
+    (item) =>
+      ["active", "attention"].includes(item.status) &&
+      !stuck.priorProviderCodes?.includes(item.subscription_code),
+  );
+  if (existing) {
+    await Subscription.updateOne(
+      { _id: stuck._id, renewalState: "uncertain" },
+      {
+        providerCode: existing.subscription_code,
+        providerToken: existing.email_token,
+        renewalState: "enabled",
+      },
+    );
+    return;
+  }
+  await Subscription.updateOne(
+    { _id: stuck._id, renewalState: "uncertain" },
+    { renewalState: "pending" },
+  );
+  await scheduleRenewal(stuck.renewalOrder, mode);
 }
 export async function cancelRenewal(workspaceId, mode) {
   const row = await Subscription.findOne({ workspaceId, mode }).select(

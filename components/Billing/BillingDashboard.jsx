@@ -137,8 +137,15 @@ export default function BillingDashboard() {
                 </p>
                 <p className='mt-2'>
                   Renewal:{" "}
-                  {data.subscription?.renewalState?.replaceAll("_", " ") ||
-                    "manual"}
+                  {{
+                    enabled: "Automatic — renews when your paid period ends",
+                    pending: "Setting up automatic renewal…",
+                    creating: "Setting up automatic renewal…",
+                    uncertain: "Confirming automatic renewal with Paystack…",
+                    configuration_error:
+                      "Automatic renewal is being set up. Pay manually if your access is about to end.",
+                    cancelled: "Cancelled — access continues until the date above",
+                  }[data.subscription?.renewalState] || "Manual"}
                 </p>
                 {data.subscription?.renewalState === "enabled" && (
                   <button

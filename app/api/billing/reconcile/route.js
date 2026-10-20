@@ -8,7 +8,7 @@ import {
 } from "@/app/models/Billing";
 import { billingMode, paystack } from "@/app/lib/billing/paystack";
 import { processEvent } from "@/app/lib/billing/events";
-import { fulfill } from "@/app/lib/billing/service";
+import { fulfill, recoverRenewal } from "@/app/lib/billing/service";
 import { reconcileWithdrawal } from "@/app/lib/billing/withdrawals";
 function authorized(request) {
   const supplied =
@@ -119,6 +119,17 @@ export async function POST(request) {
         { _id: row._id },
         { lastCheckedAt: new Date() },
       );
+    }
+  }
+  const stuck = await Subscription.find({
+    mode,
+    renewalState: { $in: ["creating", "uncertain", "configuration_error"] },
+  }).limit(5);
+  for (const row of stuck) {
+    try {
+      await recoverRenewal(row, mode);
+    } catch {
+      pending++;
     }
   }
   return Response.json({ events: events.length, verified, pending });

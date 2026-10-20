@@ -1,17 +1,12 @@
 import { allowAttempt } from "@/app/lib/rate-limit";
-import { loadPublicQr } from "@/app/lib/public-qr";
-import { NextResponse } from "next/server";
+import { loadPublicQr, localRedirect } from "@/app/lib/public-qr";
 import bcrypt from "bcryptjs";
 import QRCode from "@/app/models/QrCode";
 import { connectDB } from "@/app/lib/mongodb";
 import { accessToken } from "@/app/lib/scan-access";
 export async function POST(request, { params }) {
   const { shortCode } = await params;
-  const fail = () =>
-    NextResponse.redirect(
-      new URL("/q/" + shortCode + "/unlock?error=1", request.url),
-      303,
-    );
+  const fail = () => localRedirect("/q/" + shortCode + "/unlock?error=1", 303);
   try {
     await connectDB();
     const ip =
@@ -30,10 +25,7 @@ export async function POST(request, { params }) {
       !(await bcrypt.compare(password, qr.passwordHash))
     )
       return fail();
-    const response = NextResponse.redirect(
-      new URL("/q/" + shortCode, request.url),
-      303,
-    );
+    const response = localRedirect("/q/" + shortCode, 303);
     response.cookies.set("qr-access-" + shortCode, accessToken(qr), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

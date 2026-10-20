@@ -1,4 +1,4 @@
-import { loadPublicQr } from "@/app/lib/public-qr";
+import { loadPublicQr, localRedirect } from "@/app/lib/public-qr";
 import crypto from "node:crypto";
 import { NextResponse, after } from "next/server";
 import QRCode from "@/app/models/QrCode";
@@ -16,9 +16,7 @@ export async function GET(request, { params }) {
         status: 404,
       });
     if (!authorized(qr, request.cookies.get("qr-access-" + shortCode)?.value))
-      return NextResponse.redirect(
-        new URL("/q/" + shortCode + "/unlock", request.url),
-      );
+      return localRedirect("/q/" + shortCode + "/unlock");
     const c = qr.content || {};
     let destination = "";
     if (
@@ -39,9 +37,9 @@ export async function GET(request, { params }) {
     }
     const visitor =
       request.cookies.get("qr-visitor")?.value || crypto.randomUUID();
-    const response = NextResponse.redirect(
-      destination || new URL("/q/" + shortCode + "/view", request.url),
-    );
+    const response = destination
+      ? NextResponse.redirect(destination)
+      : localRedirect("/q/" + shortCode + "/view");
     response.headers.set("Cache-Control", "private, no-store");
     response.headers.set("Referrer-Policy", "no-referrer");
     response.cookies.set("qr-visitor", visitor, {

@@ -1,4 +1,5 @@
 import "server-only";
+import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import QRCode from "@/app/models/QrCode";
 import { connectDB } from "./mongodb";
@@ -24,4 +25,10 @@ export async function loadPublicQr(shortCode) {
     qr = await QRCode.findById(qr._id).select("+passwordHash").lean();
   }
   return qr;
+}
+
+// Redirect within this site using a relative Location. Behind a reverse proxy
+// (e.g. Hostinger), request.url is the internal address such as 0.0.0.0:3000.
+export function localRedirect(path, status = 307) {
+  return new NextResponse(null, { status, headers: { Location: path } });
 }

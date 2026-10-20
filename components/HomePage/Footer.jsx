@@ -92,11 +92,11 @@ const companyLinks = [
 ];
 
 const helpLinks = [
-  { label: "Terms & Conditions", href: "/faq" },
+  { label: "Terms & Conditions", href: "/privacy" },
   { label: "FAQ", href: "/faq" },
-  { label: "Disclamer", href: "/faq" },
+  { label: "Disclamer", href: "/privacy" },
   { label: "Cancel subscription", href: "/dashboard/billing" },
-  { label: "Privacy Policy", href: "/faq" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 function FooterColumn({ title, links }) {

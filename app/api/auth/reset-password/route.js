@@ -38,6 +38,12 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+    if (!/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      return Response.json(
+        { success: false, message: "Password must include a capital letter and a special character." },
+        { status: 400 },
+      );
+    }
 
     await connectDB();
     const forwardedFor = request.headers.get("x-forwarded-for");

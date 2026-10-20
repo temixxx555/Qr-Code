@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
               </div>
               <div>
                 <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">New password</label>
-                <input id="password" type="password" autoComplete="new-password" minLength={8} maxLength={128} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" required className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10" />
+                <input id="password" type="password" autoComplete="new-password" minLength={8} maxLength={128} pattern="(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,128}" title="Use at least 8 characters, including a capital letter and a special character." value={password} onChange={(event) => setPassword(event.target.value)} placeholder="8+ characters, capital and special character" required className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10" />
               </div>
               <div>
                 <label htmlFor="confirm-password" className="mb-2 block text-sm font-medium text-slate-700">Confirm new password</label>

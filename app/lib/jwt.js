@@ -15,11 +15,11 @@ export function generateAccessToken(userId) {
   );
 }
 
-export function generateRefreshToken(userId) {
+export function generateRefreshToken(userId, rememberMe = false) {
   return jwt.sign(
-    { userId },
+    { userId, rememberMe },
     REFRESH_TOKEN_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: rememberMe ? "30d" : "7d" }
   );
 }
 

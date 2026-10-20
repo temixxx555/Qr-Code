@@ -7,26 +7,37 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    const { name, email, password } = body;
+    const { name, email, password, confirmPassword } = body;
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       return NextResponse.json(
         {
           success: false,
-          message: "Name, email and password are required",
+          message: "Name, email, password and password confirmation are required",
         },
         { status: 400 }
       );
     }
 
-    // Basic password validation
-    if (password.length < 8) {
+    if (typeof password !== "string" || password.length < 8 || password.length > 128) {
       return NextResponse.json(
         {
           success: false,
-          message: "Password must be at least 8 characters",
+          message: "Password must be between 8 and 128 characters",
         },
+        { status: 400 }
+      );
+    }
+    if (!/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      return NextResponse.json(
+        { success: false, message: "Password must include a capital letter and a special character" },
+        { status: 400 }
+      );
+    }
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { success: false, message: "Your passwords do not match" },
         { status: 400 }
       );
     }

@@ -72,9 +72,8 @@ export async function POST() {
       user._id.toString()
     );
 
-    const newRefreshToken = generateRefreshToken(
-      user._id.toString()
-    );
+    const rememberMe = decoded.rememberMe === true;
+    const newRefreshToken = generateRefreshToken(user._id.toString(), rememberMe);
 
     // Rotate refresh token
     user.refreshToken = newRefreshToken;
@@ -94,7 +93,7 @@ export async function POST() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 15,
+      ...(rememberMe ? { maxAge: 60 * 15 } : {}),
       path: "/",
     });
 
@@ -103,7 +102,7 @@ export async function POST() {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
       path: "/",
     });
 

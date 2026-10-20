@@ -45,6 +45,8 @@ export default function AuthForm({ mode }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,15 +57,26 @@ export default function AuthForm({ mode }) {
 
     setError("");
     setSuccess("");
+    if (!isLogin && password !== confirmPassword) {
+      setError("Your passwords don’t match.");
+      return;
+    }
+    if (
+      !isLogin &&
+      (!/[A-Z]/.test(password) || !/[^A-Za-z0-9]/.test(password))
+    ) {
+      setError("Use at least 8 characters, including a capital letter and a special character.");
+      return;
+    }
     setLoading(true);
 
     try {
       let result;
 
       if (isLogin) {
-        result = await login(email, password);
+        result = await login(email, password, rememberMe);
       } else {
-        result = await register(name, email, password);
+        result = await register(name, email, password, confirmPassword);
       }
 
       if (!result.success) {
@@ -334,6 +347,11 @@ export default function AuthForm({ mode }) {
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder='Enter your password'
+                      minLength={isLogin ? undefined : 8}
+                      maxLength={128}
+                      pattern={isLogin ? undefined : "(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,128}"}
+                      title={isLogin ? undefined : "Use at least 8 characters, including a capital letter and a special character."}
+                      autoComplete={isLogin ? "current-password" : "new-password"}
                       className='h-full min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400'
                       required
                     />
@@ -350,6 +368,43 @@ export default function AuthForm({ mode }) {
                     </button>
                   </div>
                 </div>
+
+                {!isLogin && (
+                  <div>
+                    <label htmlFor='confirm-password' className='mb-2 block text-sm font-medium text-slate-700'>Confirm password</label>
+                    <div className='group flex h-12 items-center rounded-xl border border-slate-200 bg-white transition focus-within:border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/10'>
+                      <div className='flex w-12 shrink-0 items-center justify-center text-slate-400 group-focus-within:text-emerald-600'>
+                        <LockKeyhole size={18} />
+                      </div>
+                      <input
+                        id='confirm-password'
+                        name='confirmPassword'
+                        type='password'
+                        autoComplete='new-password'
+                        minLength={8}
+                        maxLength={128}
+                        value={confirmPassword}
+                        onChange={(event) => setConfirmPassword(event.target.value)}
+                        placeholder='Enter your password again'
+                        className='h-full min-w-0 flex-1 bg-transparent px-1 text-sm text-slate-900 outline-none placeholder:text-slate-400'
+                        required
+                      />
+                    </div>
+                    <p className='mt-2 text-xs text-slate-500'>At least 8 characters, with a capital letter and a special character.</p>
+                  </div>
+                )}
+
+                {isLogin && (
+                  <label className='flex w-fit cursor-pointer items-center gap-2 text-sm text-slate-600'>
+                    <input
+                      type='checkbox'
+                      checked={rememberMe}
+                      onChange={(event) => setRememberMe(event.target.checked)}
+                      className='h-4 w-4 rounded border-slate-300 accent-emerald-600'
+                    />
+                    Remember me
+                  </label>
+                )}
 
                 {/* Error */}
                 {error && (

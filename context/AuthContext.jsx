@@ -39,11 +39,12 @@ export function AuthProvider({ children }) {
     initializeAuth();
   }, []);
 
-  async function login(email, password) {
+  async function login(email, password, rememberMe) {
     try {
       const response = await api.post("/auth/login", {
         email,
         password,
+        rememberMe,
       });
 
       if (response.data.success) {
@@ -61,12 +62,13 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function register(name, email, password) {
+  async function register(name, email, password, confirmPassword) {
     try {
       const response = await api.post("/auth/register", {
         name,
         email,
         password,
+        confirmPassword,
       });
 
       return response.data;

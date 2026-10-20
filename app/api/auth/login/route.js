@@ -10,7 +10,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
 
-    const { email, password } = body;
+    const { email, password, rememberMe = false } = body;
 
     // Validate input
     if (!email || !password) {
@@ -19,6 +19,12 @@ export async function POST(request) {
           success: false,
           message: "Email and password are required",
         },
+        { status: 400 },
+      );
+    }
+    if (typeof rememberMe !== "boolean") {
+      return NextResponse.json(
+        { success: false, message: "Remember me must be true or false" },
         { status: 400 },
       );
     }
@@ -69,7 +75,7 @@ export async function POST(request) {
     // Generate tokens
     const accessToken = generateAccessToken(user._id.toString());
 
-    const refreshToken = generateRefreshToken(user._id.toString());
+    const refreshToken = generateRefreshToken(user._id.toString(), rememberMe);
 
     // Store refresh token
     user.refreshToken = refreshToken;
@@ -96,7 +102,7 @@ export async function POST(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 15,
+      ...(rememberMe ? { maxAge: 60 * 15 } : {}),
       path: "/",
     });
 
@@ -105,7 +111,7 @@ export async function POST(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
       path: "/",
     });
 

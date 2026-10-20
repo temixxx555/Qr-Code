@@ -5,14 +5,7 @@ export function proxy(request) {
 
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
-
   const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
-
-  // User is logged in and tries to visit login/signup
-  if (accessToken && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
 
   // User is not logged in and tries to visit dashboard
   if (

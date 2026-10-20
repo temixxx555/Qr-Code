@@ -19,12 +19,18 @@ export async function GET() {
   try {
     const ctx = await context();
     const catalog = (await plans()).map(
-      ({ key, label, amount, months, version }) => ({
+      ({ key, label, amount, months, version, testPlanCode, livePlanCode }) => ({
         key,
         label,
         amount,
         months,
         version,
+        automaticRenewalAvailable: Boolean(
+          (ctx.mode === "test" ? testPlanCode : livePlanCode) ||
+            process.env[
+              `PAYSTACK_${ctx.mode.toUpperCase()}_PLAN_${key.toUpperCase()}_V${version}`
+            ],
+        ),
       }),
     );
     return Response.json({

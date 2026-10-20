@@ -178,6 +178,7 @@ export default function BillingDashboard() {
                     aria-pressed={plan === item.key}
                     onClick={() => {
                       setPlan(item.key);
+                      if (!item.automaticRenewalAvailable) setRecurring(false);
                       setQuote(null);
                     }}
                     className={`relative rounded-xl border-2 p-5 text-left transition ${plan === item.key ? "border-emerald-600 bg-emerald-50" : "border-slate-200 hover:border-emerald-300"}`}
@@ -215,36 +216,57 @@ export default function BillingDashboard() {
                     }}
                   />
                 </Field>
-                {/* <label className='flex items-start gap-3 rounded-xl bg-slate-50 p-4 text-sm'>
-                  <input
-                    type='checkbox'
-                    checked={recurring}
-                    disabled
-                    onChange={(e) => {
-                      setRecurring(e.target.checked);
-                      setQuote(null);
-                    }}
-                    className='mt-1'
-                  />
-                  <span>
-                    <strong>Enable automatic renewal</strong>
-                    <span className='mt-1 block text-slate-500'>
-                      Automatic renewal uses a reusable card. Choose a one-time
-                      payment to use other available payment methods.
-                    </span>
-                    <span className='mt-1 block text-slate-500'>
-                      I authorize{" "}
-                      {selected
-                        ? money(selected.amount)
-                        : "the full plan price"}{" "}
-                      every {selected?.months} month(s), starting after my first
-                      paid period. I can cancel future renewals from Billing.
-                      Leave unchecked for a one-time payment.
-                    </span>
-                  </span>
-                </label> */}
-
-                {/* jj */}
+                <div>
+                  <p className='mb-2 text-sm font-medium text-slate-700'>
+                    Payment type
+                  </p>
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    <button
+                      type='button'
+                      aria-pressed={!recurring}
+                      disabled={busy}
+                      onClick={() => {
+                        setRecurring(false);
+                        setQuote(null);
+                      }}
+                      className={`rounded-xl border-2 p-4 text-left transition ${!recurring ? "border-emerald-600 bg-emerald-50" : "border-slate-200 hover:border-emerald-300"}`}
+                    >
+                      <strong className='block text-sm text-slate-900'>
+                        One-time payment
+                      </strong>
+                      <span className='mt-1 block text-xs text-slate-500'>
+                        Pay manually when you choose to renew.
+                      </span>
+                    </button>
+                    <button
+                      type='button'
+                      aria-pressed={recurring}
+                      disabled={busy || !selected?.automaticRenewalAvailable}
+                      onClick={() => {
+                        setRecurring(true);
+                        setQuote(null);
+                      }}
+                      className={`rounded-xl border-2 p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${recurring ? "border-emerald-600 bg-emerald-50" : "border-slate-200 hover:border-emerald-300"}`}
+                    >
+                      <strong className='block text-sm text-slate-900'>
+                        Auto renewal
+                      </strong>
+                      <span className='mt-1 block text-xs text-slate-500'>
+                        {selected?.automaticRenewalAvailable
+                          ? `Automatically renew this plan with your card to keep Premium active.`
+                          : "Not available for this plan yet."}
+                      </span>
+                    </button>
+                  </div>
+                  {recurring && selected?.automaticRenewalAvailable && (
+                    <p className='mt-2 text-xs leading-5 text-slate-500'>
+                      By continuing, you authorize recurring card charges at
+                      the full plan price, including VAT, after this paid period
+                      ends. You can cancel future renewals from Billing at any
+                      time.
+                    </p>
+                  )}
+                </div>
                 {!quote ? (
                   <button
                     className={button}
@@ -286,7 +308,7 @@ export default function BillingDashboard() {
                     </div>
                     <p className='mt-3 text-sm text-slate-500'>
                       {recurring
-                        ? `Then ${money(quote.renewalAmount)} every ${quote.months} months. Your exact renewal date appears after payment.`
+                        ? `Auto renewal: ${money(quote.renewalAmount)} every ${quote.months} ${quote.months === 1 ? "month" : "months"}, starting after this paid period. You can cancel anytime from Billing.`
                         : "One-time purchase. No automatic renewal."}
                     </p>
                     <button

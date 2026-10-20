@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import Sidebar from "@/components/Dashboard/Sidebar";
 import PremiumGate from "@/components/Billing/PremiumGate";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Image from "next/image";
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className='min-h-screen bg-slate-50 overflow-x-hidden '>
+    <ProtectedRoute>
+      <div className='min-h-screen bg-slate-50 overflow-x-hidden '>
       {/* MOBILE TOP BAR */}
       <div className='fixed left-0 right-0 top-0 z-50 flex h-16 items-center border-b bg-white px-4 lg:hidden'>
         <button
@@ -68,6 +70,7 @@ export default function DashboardLayout({ children }) {
           aria-label='Close sidebar'
         />
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

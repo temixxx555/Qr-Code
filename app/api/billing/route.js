@@ -12,27 +12,20 @@ import {
   cancelRenewal,
   quote,
 } from "@/app/lib/billing/service";
-import { planCharge } from "@/lib/billing-rules";
+import { planCharge, providerPlanCode } from "@/lib/billing-rules";
 import { Order } from "@/app/models/Billing";
 import { allowAttempt } from "@/app/lib/rate-limit";
 export async function GET() {
   try {
     const ctx = await context();
-    const catalog = (await plans()).map(
-      ({ key, label, amount, months, version, testPlanCode, livePlanCode }) => ({
-        key,
-        label,
-        amount,
-        months,
-        version,
-        automaticRenewalAvailable: Boolean(
-          (ctx.mode === "test" ? testPlanCode : livePlanCode) ||
-            process.env[
-              `PAYSTACK_${ctx.mode.toUpperCase()}_PLAN_${key.toUpperCase()}_V${version}`
-            ],
-        ),
-      }),
-    );
+    const catalog = (await plans()).map((plan) => ({
+      key: plan.key,
+      label: plan.label,
+      amount: plan.amount,
+      months: plan.months,
+      version: plan.version,
+      automaticRenewalAvailable: Boolean(providerPlanCode(plan, ctx.mode)),
+    }));
     return Response.json({
       premium: ctx.premium,
       state: ctx.state,

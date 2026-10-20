@@ -10,16 +10,21 @@ import { billingMode, paystack } from "@/app/lib/billing/paystack";
 import { processEvent } from "@/app/lib/billing/events";
 import { fulfill } from "@/app/lib/billing/service";
 import { reconcileWithdrawal } from "@/app/lib/billing/withdrawals";
-export async function POST(request) {
-  const expected = process.env.BILLING_RECONCILE_SECRET;
+function authorized(request) {
   const supplied =
     request.headers.get("authorization")?.replace(/^Bearer /, "") || "";
-  if (
-    !expected ||
-    expected.length < 32 ||
-    Buffer.byteLength(expected) !== Buffer.byteLength(supplied) ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(supplied))
-  )
+  // Vercel Cron sends CRON_SECRET; manual recovery calls use BILLING_RECONCILE_SECRET.
+  return [process.env.BILLING_RECONCILE_SECRET, process.env.CRON_SECRET].some(
+    (expected) =>
+      expected &&
+      expected.length >= 32 &&
+      Buffer.byteLength(expected) === Buffer.byteLength(supplied) &&
+      crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(supplied)),
+  );
+}
+export const GET = POST;
+export async function POST(request) {
+  if (!authorized(request))
     return new Response("Unauthorized", { status: 401 });
   await connectDB();
   const mode = billingMode();
@@ -29,9 +34,14 @@ export async function POST(request) {
   for (const event of events) await processEvent(event._id);
   let verified = 0,
     pending = 0;
-  const orders = await Order.find({ mode, status: "pending" })
+  // Abandoned checkouts stay pending forever; only recheck recent ones.
+  const orders = await Order.find({
+    mode,
+    status: "pending",
+    createdAt: { $gt: new Date(Date.now() - 3 * 86400000) },
+  })
     .sort({ lastCheckedAt: 1 })
-    .limit(5);
+    .limit(20);
   for (const order of orders) {
     try {
       await fulfill(order.reference, mode);

@@ -26,8 +26,7 @@ test("all requested Nigerian prices are exact integer kobo", () => {
     PLANS.map((p) => [p.months, p.amount]),
     [
       [1, 300000],
-      [3, 800000],
-      [6, 1600000],
+      [3, 850000],
       [12, 2900000],
     ],
   );
@@ -98,6 +97,33 @@ const payment = {
 };
 test("server verification accepts only the matching successful payment", () =>
   assert.doesNotThrow(() => assertVerifiedPayment(order, payment)));
+test("verification accepts Paystack fees passed on to the customer", () => {
+  assert.doesNotThrow(() =>
+    assertVerifiedPayment(order, {
+      ...payment,
+      amount: order.amount + 15064,
+      requested_amount: order.amount,
+    }),
+  );
+  assert.throws(() =>
+    assertVerifiedPayment(order, {
+      ...payment,
+      amount: order.amount + 15064,
+      requested_amount: order.amount - 1,
+    }),
+  );
+  assert.throws(() =>
+    assertVerifiedPayment(order, {
+      ...payment,
+      amount: order.amount - 1,
+      requested_amount: order.amount,
+    }),
+  );
+});
+test("renewal plan intervals match the paid period", () => {
+  const intervals = { 1: "monthly", 3: "quarterly", 12: "annually" };
+  for (const plan of PLANS) assert.equal(plan.interval, intervals[plan.months]);
+});
 for (const [field, value] of [
   ["status", "pending"],
   ["amount", 1],

@@ -14,6 +14,7 @@ import {
   assertVerifiedPayment,
   withVat,
   planCharge,
+  providerPlanCode,
 } from "@/lib/billing-rules";
 import { context, plans, settings, BillingError } from "./access";
 import { paystack, secretKey } from "./paystack";
@@ -99,11 +100,7 @@ export async function initializeCheckout(request, body) {
   const pricing = await quote(workspace, mode, body.plan, body.referralCode);
   if (body.recurring !== true && body.recurring !== false)
     throw new BillingError("Choose automatic or manual renewal.");
-  const providerPlan =
-    pricing.plan[`${mode}PlanCode`] ||
-    process.env[
-      `PAYSTACK_${mode.toUpperCase()}_PLAN_${pricing.plan.key.toUpperCase()}_V${pricing.plan.version}`
-    ];
+  const providerPlan = providerPlanCode(pricing.plan, mode);
   if (body.recurring && !providerPlan)
     throw new BillingError(
       "Automatic renewal is not configured for this plan. Choose manual renewal.",

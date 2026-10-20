@@ -84,7 +84,7 @@ async function subscriptionEvent(event) {
       !Number.isFinite(end.getTime()) ||
       end <= start ||
       end - start > 370 * 86400000 ||
-      data.amount !== planCharge(row.plan).total
+      !(data.amount >= planCharge(row.plan).total)
     )
       throw new Error("Invalid renewal period or amount");
     const initial = await Order.findOne({

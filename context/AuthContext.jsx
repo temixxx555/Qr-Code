@@ -21,11 +21,14 @@ export function AuthProvider({ children }) {
 
       if (response.data.success) {
         setUser(response.data.user);
+        return response.data.user;
       } else {
         setUser(null);
+        return null;
       }
     } catch (error) {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }

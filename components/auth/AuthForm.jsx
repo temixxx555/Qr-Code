@@ -29,7 +29,7 @@ export default function AuthForm({ mode }) {
 
   const router = useRouter();
 
-  const { login, register } = useAuth();
+  const { login, register, refreshUser } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -127,9 +127,14 @@ export default function AuthForm({ mode }) {
         );
       }
 
+      const authenticatedUser = await refreshUser();
+      if (!authenticatedUser) {
+        throw new Error("Could not load your signed-in account. Please try again.");
+      }
+
       toast.success("Welcome!");
 
-      router.push("/dashboard");
+      router.replace("/dashboard");
       router.refresh();
     } catch (error) {
       console.error("GOOGLE LOGIN ERROR:", error);

@@ -15,6 +15,8 @@ import {
   REFERRAL_DEFAULTS,
   VAT_DEFAULT_BPS,
   hasPremium,
+  hasServiceAccess,
+  isAdministrator,
   subscriptionState,
 } from "@/lib/billing-rules";
 import { billingMode } from "./paystack";
@@ -116,23 +118,25 @@ export async function context() {
     workspaceId: workspace._id,
     mode,
   });
-  const premium =
-    !user.suspended &&
-    subscription?.status !== "suspended" &&
-    (hasPremium(subscription) ||
-      new Date(subscription?.complimentaryThrough) > new Date());
+  const premium = hasServiceAccess(user, subscription);
   return {
     user,
     workspace,
     subscription,
     premium,
     mode,
-    state: user.suspended ? "suspended" : premium && !hasPremium(subscription) ? "complimentary" : subscriptionState(subscription),
+    state: user.suspended
+      ? "suspended"
+      : isAdministrator(user)
+        ? "admin"
+        : premium && !hasPremium(subscription)
+          ? "complimentary"
+          : subscriptionState(subscription),
   };
 }
 export async function premiumGate(userId) {
   await connectDB();
-  const user = await User.findById(userId).select("suspended");
+  const user = await User.findById(userId).select("suspended adminRole");
   const workspace = await Workspace.findOne({ ownerId: userId });
   const subscription =
     workspace &&
@@ -140,14 +144,7 @@ export async function premiumGate(userId) {
       workspaceId: workspace._id,
       mode: billingMode(),
     }));
-  if (
-    user &&
-    !user.suspended &&
-    subscription?.status !== "suspended" &&
-    (hasPremium(subscription) ||
-      new Date(subscription?.complimentaryThrough) > new Date())
-  )
-    return null;
+  if (hasServiceAccess(user, subscription)) return null;
   return Response.json(
     {
       code: "UPGRADE_REQUIRED",

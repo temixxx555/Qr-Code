@@ -165,7 +165,7 @@ export default function WeddingForm({ value = {}, onChange }) {
           value={value}
           onChange={onChange}
           fields={[
-            ["rsvpPhone", "RSVP WhatsApp number", "tel"],
+            ["rsvpPhone", "RSVP WhatsApp number (+234)", "tel"],
             ["rsvpUrl", "RSVP form link", "url"],
             ["rsvpBy", "RSVP by", "date"],
             ["registryUrl", "Gift registry link", "url"],

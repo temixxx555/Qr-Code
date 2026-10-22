@@ -108,7 +108,13 @@ export default function BillingDashboard() {
               Test environment — these payments and earnings have no cash value.
             </Notice>
           )}
-          {!data.checkoutReady && (
+          {data.isAdmin && (
+            <Notice>
+              Administrator access includes all services. You do not need a
+              Premium subscription or payment to use them.
+            </Notice>
+          )}
+          {!data.isAdmin && !data.checkoutReady && (
             <Notice>
               Payments are not enabled yet. The administrator needs to connect
               Paystack before checkout can open.
@@ -118,7 +124,11 @@ export default function BillingDashboard() {
             <div className='flex flex-wrap justify-between gap-6'>
               <div>
                 <span className='rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700'>
-                  {data.premium ? "Premium" : "Free"} ·{" "}
+                  {data.isAdmin
+                    ? "Administrator access"
+                    : data.premium
+                      ? "Premium"
+                      : "Free"} ·{" "}
                   {data.state.replaceAll("_", " ")}
                 </span>
                 <h2 className='mt-4 text-xl font-semibold'>
@@ -128,7 +138,7 @@ export default function BillingDashboard() {
                   {data.workspace.type} account
                 </p>
               </div>
-              <div className='text-sm text-slate-600'>
+              {!data.isAdmin && <div className='text-sm text-slate-600'>
                 <p>
                   Paid access until{" "}
                   <strong>
@@ -169,10 +179,10 @@ export default function BillingDashboard() {
                     Cancel automatic renewal
                   </button>
                 )}
-              </div>
+              </div>}
             </div>
           </Card>
-          <div className='grid gap-6 lg:grid-cols-[1fr_320px]'>
+          {!data.isAdmin && <div className='grid gap-6 lg:grid-cols-[1fr_320px]'>
             <Card title='Choose your Premium billing period'>
               <p className='mb-5 text-sm text-slate-500'>
                 One payment for the full period. Same prices for Personal and
@@ -378,7 +388,7 @@ export default function BillingDashboard() {
                 card number.
               </p>
             </div>
-          </div>
+          </div>}
           <Card title='Payment history'>
             <div className='space-y-3'>
               {!data.orders.length && (

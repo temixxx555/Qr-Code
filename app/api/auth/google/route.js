@@ -8,6 +8,8 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "@/app/lib/jwt.js";
+import { createEmailChallenge } from "@/app/lib/auth-challenges";
+import { allowAttempt } from "@/app/lib/rate-limit";
 
 export async function POST(request) {
   try {
@@ -74,6 +76,27 @@ export async function POST(request) {
         },
         { status: 403 }
       );
+    }
+
+    if (user.twoFactorEnabled) {
+      if (!(await allowAttempt(`login-two-factor:${user._id}`, 5, 60 * 60 * 1000))) {
+        return NextResponse.json(
+          { success: false, message: "Too many sign-in code requests. Try again later." },
+          { status: 429 },
+        );
+      }
+      const challenge = await createEmailChallenge(
+        user,
+        "login-two-factor",
+        false,
+      );
+      return NextResponse.json({
+        success: true,
+        requiresTwoFactor: true,
+        challengeId: challenge.challengeId,
+        emailHint: user.email.replace(/^(.).+(@.*)$/, "$1••••$2"),
+        message: "Enter the sign-in code we sent to your email.",
+      });
     }
 
     // Generate YOUR existing JWT tokens

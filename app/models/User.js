@@ -47,6 +47,11 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+
     refreshToken: {
       type: String,
       default: null,

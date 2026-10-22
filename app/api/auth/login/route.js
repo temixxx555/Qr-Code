@@ -5,6 +5,8 @@ import User from "../../../models/User.js";
 import { connectDB } from "@/app/lib/mongodb.js";
 
 import { generateAccessToken, generateRefreshToken } from "@/app/lib/jwt.js";
+import { createEmailChallenge } from "@/app/lib/auth-challenges";
+import { allowAttempt } from "@/app/lib/rate-limit";
 
 export async function POST(request) {
   try {
@@ -70,6 +72,36 @@ export async function POST(request) {
         },
         { status: 401 },
       );
+    }
+
+    if (user.twoFactorEnabled) {
+      if (!user.isVerified) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Verify your email address before using two-factor sign-in.",
+          },
+          { status: 403 },
+        );
+      }
+      if (!(await allowAttempt(`login-two-factor:${user._id}`, 5, 60 * 60 * 1000))) {
+        return NextResponse.json(
+          { success: false, message: "Too many sign-in code requests. Try again later." },
+          { status: 429 },
+        );
+      }
+      const challenge = await createEmailChallenge(
+        user,
+        "login-two-factor",
+        rememberMe,
+      );
+      return NextResponse.json({
+        success: true,
+        requiresTwoFactor: true,
+        challengeId: challenge.challengeId,
+        emailHint: user.email.replace(/^(.).+(@.*)$/, "$1••••$2"),
+        message: "Enter the sign-in code we sent to your email.",
+      });
     }
 
     // Generate tokens

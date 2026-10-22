@@ -30,6 +30,7 @@ export default function DashboardLayout({ children }) {
           className='w-[80px] ml-6 rounded-xl '
         />
       </div>
+      
 
       {/* SIDEBAR */}
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

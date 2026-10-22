@@ -47,6 +47,8 @@ export default function AuthForm({ mode }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [challengeId, setChallengeId] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -57,6 +59,30 @@ export default function AuthForm({ mode }) {
 
     setError("");
     setSuccess("");
+    if (challengeId) {
+      setLoading(true);
+      try {
+        await api.post("/auth/two-factor/verify", {
+          challengeId,
+          code: verificationCode,
+        });
+        const authenticatedUser = await refreshUser();
+        if (!authenticatedUser)
+          throw new Error("Could not load your signed-in account. Please try again.");
+        toast.success("Sign-in verified.");
+        router.replace("/dashboard");
+        router.refresh();
+      } catch (requestError) {
+        setError(
+          requestError.response?.data?.message ||
+            requestError.message ||
+            "Could not verify your sign-in code.",
+        );
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     if (!isLogin && password !== confirmPassword) {
       setError("Your passwords don’t match.");
       return;
@@ -85,6 +111,11 @@ export default function AuthForm({ mode }) {
       }
 
       if (isLogin) {
+        if (result.requiresTwoFactor) {
+          setChallengeId(result.challengeId);
+          setSuccess(result.message || "Enter the code sent to your email.");
+          return;
+        }
         router.push("/dashboard");
       } else {
         setSuccess("Account created successfully. You can now log in.");
@@ -125,6 +156,12 @@ export default function AuthForm({ mode }) {
         throw new Error(
           response.data.message || "Google authentication failed",
         );
+      }
+
+      if (response.data.requiresTwoFactor) {
+        setChallengeId(response.data.challengeId);
+        setSuccess(response.data.message || "Enter the code sent to your email.");
+        return;
       }
 
       const authenticatedUser = await refreshUser();
@@ -225,18 +262,24 @@ export default function AuthForm({ mode }) {
               {/* Heading */}
               <div>
                 <h2 className='text-3xl font-semibold mt-8 tracking-[-0.035em] text-slate-950'>
-                  {isLogin ? "Welcome back" : "Create your account"}
+                  {challengeId
+                    ? "Verify it’s you"
+                    : isLogin
+                      ? "Welcome back"
+                      : "Create your account"}
                 </h2>
 
                 <p className='mt-2 text-[15px] leading-6 text-slate-500'>
-                  {isLogin
-                    ? "Enter your details to access your QR workspace."
-                    : "Get started with your QR workspace in just a few steps."}
+                  {challengeId
+                    ? "Enter the six-digit code we sent to your email to finish signing in."
+                    : isLogin
+                      ? "Enter your details to access your QR workspace."
+                      : "Get started with your QR workspace in just a few steps."}
                 </p>
               </div>
 
               {/* Google button */}
-              <button
+              {!challengeId && <button
                 type='button'
                 onClick={handleGoogleAuth}
                 disabled={loading}
@@ -249,10 +292,10 @@ export default function AuthForm({ mode }) {
                   : isLogin
                     ? "Continue with Google"
                     : "Sign up with Google"}
-              </button>
+              </button>}
 
               {/* Divider */}
-              <div className='my-6 flex items-center gap-3'>
+              {!challengeId && <div className='my-6 flex items-center gap-3'>
                 <div className='h-px flex-1 bg-slate-200' />
 
                 <span className='text-xs font-medium uppercase tracking-wider text-slate-400'>
@@ -260,10 +303,42 @@ export default function AuthForm({ mode }) {
                 </span>
 
                 <div className='h-px flex-1 bg-slate-200' />
-              </div>
+              </div>}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className='space-y-5'>
+                {challengeId ? (
+                  <div>
+                    <label htmlFor='two-factor-code' className='mb-2 block text-sm font-medium text-slate-700'>
+                      Six-digit email code
+                    </label>
+                    <input
+                      id='two-factor-code'
+                      name='code'
+                      type='text'
+                      inputMode='numeric'
+                      autoComplete='one-time-code'
+                      pattern='[0-9]{6}'
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder='000000'
+                      className='h-12 w-full rounded-xl border border-slate-200 px-4 text-center text-lg tracking-[0.35em] text-slate-900 outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10'
+                      required
+                    />
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setChallengeId("");
+                        setVerificationCode("");
+                        setSuccess("");
+                      }}
+                      className='mt-3 text-sm font-medium text-emerald-700 hover:text-emerald-800'
+                    >
+                      Back to sign in
+                    </button>
+                  </div>
+                ) : <>
                 {/* Full name */}
                 {!isLogin && (
                   <div>
@@ -410,6 +485,7 @@ export default function AuthForm({ mode }) {
                     Remember me
                   </label>
                 )}
+                </>}
 
                 {/* Error */}
                 {error && (
@@ -428,16 +504,20 @@ export default function AuthForm({ mode }) {
                 {/* Submit */}
                 <button
                   type='submit'
-                  disabled={loading}
+                  disabled={loading || (challengeId && verificationCode.length !== 6)}
                   className='group flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#22c55e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#16a34a] focus:outline-none focus:ring-4 focus:ring-emerald-500/20 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60'
                 >
                   {loading
-                    ? isLogin
-                      ? "Logging in..."
-                      : "Creating account..."
-                    : isLogin
-                      ? "Log in"
-                      : "Create account"}
+                    ? challengeId
+                      ? "Verifying…"
+                      : isLogin
+                        ? "Logging in..."
+                        : "Creating account..."
+                    : challengeId
+                      ? "Verify and sign in"
+                      : isLogin
+                        ? "Log in"
+                        : "Create account"}
 
                   {!loading && (
                     <ArrowRight

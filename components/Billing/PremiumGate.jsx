@@ -5,7 +5,9 @@ import Link from "next/link";
 import api from "@/lib/axios";
 import { money } from "@/lib/billing-rules";
 import { Card, button } from "./ui";
+import { useAuth } from "@/context/AuthContext";
 export default function PremiumGate({ children }) {
+    const { user } = useAuth();
   const path = usePathname();
   const operational =
     path === "/dashboard" ||
@@ -45,7 +47,7 @@ export default function PremiumGate({ children }) {
         </Link>
       </Card>
     );
-  if (result.premium) return children;
+  if (result.premium || user?.adminRole && user.adminRole !== "none") return children;
   const amounts = (result.plans || [])
     .map((plan) => plan.amount)
     .filter(Number.isFinite);
@@ -68,3 +70,5 @@ export default function PremiumGate({ children }) {
     </div>
   );
 }
+
+  

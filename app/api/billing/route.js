@@ -12,7 +12,11 @@ import {
   cancelRenewal,
   quote,
 } from "@/app/lib/billing/service";
-import { planCharge, providerPlanCode } from "@/lib/billing-rules";
+import {
+  isAdministrator,
+  planCharge,
+  providerPlanCode,
+} from "@/lib/billing-rules";
 import { Order } from "@/app/models/Billing";
 import { allowAttempt } from "@/app/lib/rate-limit";
 export async function GET() {
@@ -29,6 +33,7 @@ export async function GET() {
     return Response.json({
       premium: ctx.premium,
       state: ctx.state,
+      isAdmin: isAdministrator(ctx.user),
       mode: ctx.mode,
       adminRole: ctx.user.adminRole,
       checkoutReady: Boolean(

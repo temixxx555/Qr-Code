@@ -37,10 +37,11 @@ export async function recordScan(qr, request, visitor) {
 
     const first = seen.upsertedCount === 1;
 
-    // IP
+    // IP (Cloudflare sends the visitor's address in cf-connecting-ip)
     const forwardedFor = request.headers.get("x-forwarded-for");
 
     const ipAddress =
+      request.headers.get("cf-connecting-ip") ||
       forwardedFor?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       null;

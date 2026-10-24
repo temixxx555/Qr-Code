@@ -42,8 +42,28 @@ Never expose these as `NEXT_PUBLIC_*` values.
   Replace `app/lib/storage.js` with an object-storage adapter for such deployments.
 - `ANALYTICS_HASH_SECRET`: optional dedicated secret for anonymous visitor hashing.
   Defaults to the access-token secret. Keep it stable to preserve visitor counts.
-- `TRUST_GEO_HEADERS=true`: enable only behind infrastructure that overwrites
-  `x-vercel-ip-country`. Otherwise countries are reported as Unknown.
+- Location analytics read geolocation headers added by the hosting edge. Vercel
+  adds them automatically. Anywhere else, put the domain behind Cloudflare (below).
+  Without these headers, scans are stored with an Unknown country and no city or
+  map coordinates.
+
+### Location analytics on Hostinger (Cloudflare)
+
+Hostinger's Node.js hosting does not add location headers to requests. Cloudflare's
+free plan does:
+
+1. Add the domain to Cloudflare and change the nameservers at Hostinger to the two
+   Cloudflare gives you. Keep the DNS records for the site **Proxied** (orange cloud).
+2. Set **SSL/TLS > Overview** to **Full (strict)**. Hostinger already serves a valid
+   certificate, and Flexible mode causes redirect loops.
+3. In **Rules > Settings > Managed Transforms**, turn on **Add visitor location
+   headers**. This adds `cf-ipcity`, `cf-region`, `cf-iplatitude`, `cf-iplongitude`,
+   `cf-postal-code` and `cf-timezone`. Country (`cf-ipcountry`) is sent by default.
+4. Scan a QR code from your phone (mobile data, not the server's network) and check
+   that the country, city and map marker appear. Older scans are not backfilled.
+
+The app trusts these headers as-is, so a request sent straight to the Hostinger
+origin (bypassing Cloudflare) could fake a location. That only affects analytics.
 
 Media files are publicly served under unguessable UUID URLs; they are intended
 for QR landing pages, not private document storage. File signatures, MIME types,

@@ -17,6 +17,7 @@ import apps from "./types/apps/appsForm";
 import coupon from "./types/coupon/couponForm";
 import product from "./types/product/productForm";
 import wedding from "./types/wedding/weddingForm";
+import event from "./types/event/eventForm";
 const registry = {
   website,
   pdf,
@@ -36,6 +37,7 @@ const registry = {
   coupon,
   product,
   wedding,
+  event,
 };
 export default function QrContentForm({ type, value, onChange }) {
   const Component = registry[type === "app" ? "apps" : type];

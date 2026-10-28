@@ -67,4 +67,13 @@ export const fixtures = {
     videos: [{ url: "https://example.com/film.mp4", title: "Our story" }],
     schedule: [{ title: "Ceremony", time: "14:00" }],
   },
+  event: {
+    kind: "conference",
+    title: "Lagos Tech Summit",
+    date: "2026-11-20",
+    time: "09:00",
+    endTime: "17:00",
+    speakers: [{ name: "Ada Obi", role: "CTO" }],
+    schedule: [{ title: "Keynote", time: "09:30" }],
+  },
 };

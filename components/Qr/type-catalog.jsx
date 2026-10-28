@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Ticket,
   Heart,
+  PartyPopper,
 } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 export const qrTypes = [
@@ -325,6 +326,23 @@ qrTypes.push(
       subline: "12 December 2026",
       body: "Join us as we celebrate our wedding day.",
       footer: "RSVP",
+    },
+  },
+  {
+    id: "event",
+    label: "Event",
+    icon: PartyPopper,
+    title: "Event",
+    description:
+      "An event page for birthdays, conferences, concerts, church services and more — date, venue, agenda, tickets and RSVP.",
+    color: "#20c75a",
+    mockupBg: "#6d28d9",
+    mockup: {
+      type: "event",
+      headline: "Lagos Tech Summit",
+      subline: "Friday, 20 November 2026",
+      body: "Agenda, speakers, directions and tickets in one scan.",
+      footer: "Get Tickets",
     },
   },
 );

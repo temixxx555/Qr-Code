@@ -24,6 +24,7 @@ import {
   ShoppingBag,
   Ticket,
   Heart,
+  PartyPopper,
 } from "lucide-react";
 
 import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
@@ -244,7 +245,7 @@ const qrTypes = [
     mockupBg: "bg-[#ea580c]",
     title: "Coupon",
     description:
-      "Reward customers with free gifts or discounts. Add a code, an expiry date and redemption instructions — expired coupons switch off automatically.",
+      "Reward customers with free gifts or discounts. Add a code, choose when it starts and how long it runs — a day, a week or more — and expired coupons switch off automatically.",
     mockup: {
       type: "coupon",
       headline: "20% OFF",
@@ -267,6 +268,22 @@ const qrTypes = [
       subline: "Saturday, 12 December 2026",
       body: "Join us as we celebrate our wedding day. Countdown, directions, gallery and RSVP in one scan.",
       footer: "RSVP Now",
+    },
+  },
+  {
+    id: "event",
+    label: "Event",
+    icon: PartyPopper,
+    mockupBg: "bg-[#6d28d9]",
+    title: "Event",
+    description:
+      "One QR for any event — birthdays, conferences, concerts, church services, graduations and memorials. Share the date, venue, agenda, line-up and tickets, and collect RSVPs.",
+    mockup: {
+      type: "event",
+      headline: "Lagos Tech Summit",
+      subline: "Friday, 20 November 2026",
+      body: "Countdown, agenda, speakers, directions and tickets in one scan.",
+      footer: "Get Tickets",
     },
   },
 ];
@@ -627,7 +644,7 @@ function PhoneMockup({ item }) {
             </>
           )}
 
-          {["website", "product", "coupon", "wedding"].includes(mockup.type) && (
+          {["website", "product", "coupon", "wedding", "event"].includes(mockup.type) && (
             <StandardMockupBody item={item} />
           )}
         </div>

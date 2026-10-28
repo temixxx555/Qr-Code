@@ -8,7 +8,7 @@ import { Heart, CalendarHeart, Images, Clapperboard, Gift } from "lucide-react";
 const MAX_IMAGES = 30;
 const MAX_VIDEOS = 10;
 
-function Hint({ icon: Icon, title, children }) {
+export function Hint({ icon: Icon, title, children }) {
   return (
     <div className="mb-4 flex items-start gap-3 rounded-xl bg-slate-50 p-4">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-500 shadow-sm">

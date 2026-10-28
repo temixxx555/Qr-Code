@@ -18,7 +18,7 @@ import {
 import { safeUrl, phoneDigits, whatsappUrl } from "@/lib/qr-content";
 import { WEDDING_THEMES } from "./themes";
 
-function formatDate(date, options) {
+export function formatDate(date, options) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return "";
   return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
     timeZone: "UTC",
@@ -26,14 +26,14 @@ function formatDate(date, options) {
   });
 }
 
-function formatTime(time) {
+export function formatTime(time) {
   const match = /^(\d{2}):(\d{2})$/.exec(time || "");
   if (!match) return time || "";
   const hours = Number(match[1]);
   return `${hours % 12 || 12}:${match[2]} ${hours < 12 ? "AM" : "PM"}`;
 }
 
-function youtubeId(url) {
+export function youtubeId(url) {
   try {
     const u = new URL(url);
     const host = u.hostname.replace(/^www\.|^m\./, "");
@@ -50,7 +50,13 @@ function youtubeId(url) {
   }
 }
 
-function Countdown({ date, time, accent }) {
+export function Countdown({
+  date,
+  time,
+  accent,
+  todayText = "Today is the day! 💍",
+  pastText = "Just married ♥",
+}) {
   const [left, setLeft] = useState(null);
   useEffect(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return;
@@ -66,7 +72,7 @@ function Countdown({ date, time, accent }) {
   if (left <= 0)
     return (
       <p className="mt-6 text-sm font-semibold" style={{ color: accent }}>
-        {left > -86400000 ? "Today is the day! 💍" : "Just married ♥"}
+        {left > -86400000 ? todayText : pastText}
       </p>
     );
   const units = [
@@ -93,7 +99,7 @@ function Countdown({ date, time, accent }) {
   );
 }
 
-function Heading({ children, accent }) {
+export function Heading({ children, accent }) {
   return (
     <div className="mb-4 flex items-center gap-3">
       <span className="h-px flex-1" style={{ background: `${accent}55` }} />

@@ -67,6 +67,11 @@ export default function BillingDashboard() {
     }
   }
   const selected = data?.plans.find((item) => item.key === plan);
+  // Pending and misconfigured setups still renew unless cancelled, so they get
+  // the button too. creating/uncertain must reconcile with Paystack first.
+  const autoRenewActive = ["enabled", "pending", "configuration_error"].includes(
+    data?.subscription?.renewalState,
+  );
   return (
     <div className='mx-auto max-w-6xl space-y-6'>
       <header className='flex flex-wrap items-end justify-between gap-4'>
@@ -138,7 +143,7 @@ export default function BillingDashboard() {
                   {data.workspace.type} account
                 </p>
               </div>
-              {!data.isAdmin && <div className='text-sm text-slate-600'>
+              {(!data.isAdmin || autoRenewActive) && <div className='text-sm text-slate-600'>
                 <p>
                   Paid access until{" "}
                   <strong>
@@ -157,10 +162,10 @@ export default function BillingDashboard() {
                     cancelled: "Cancelled — access continues until the date above",
                   }[data.subscription?.renewalState] || "Manual"}
                 </p>
-                {data.subscription?.renewalState === "enabled" && (
+                {autoRenewActive && (
                   <button
                     disabled={busy}
-                    className={`${secondary} mt-3`}
+                    className='mt-3 inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50'
                     onClick={() => {
                       if (
                         window.confirm(
@@ -170,14 +175,23 @@ export default function BillingDashboard() {
                         run(async () => {
                           await api.post("/billing", { action: "cancel" });
                           await load();
+                          toast.success("Automatic renewal cancelled.");
                           setMessage(
                             "Renewal cancelled. Your current paid period remains available.",
                           );
                         });
                     }}
                   >
-                    Cancel automatic renewal
+                    Cancel auto renew
                   </button>
+                )}
+                {["creating", "uncertain"].includes(
+                  data.subscription?.renewalState,
+                ) && (
+                  <p className='mt-3 max-w-xs text-xs text-slate-500'>
+                    You can cancel auto renew once Paystack confirms the
+                    setup. Refresh this page in a few minutes.
+                  </p>
                 )}
               </div>}
             </div>

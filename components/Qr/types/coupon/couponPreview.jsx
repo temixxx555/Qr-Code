@@ -5,29 +5,47 @@ import { Gift, Ticket, Copy, Check, MapPin, Phone, Clock } from "lucide-react";
 import { Picture, Action } from "../presentation";
 import { safeUrl } from "@/lib/qr-content";
 
+function timeLeft(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const h = Math.floor(s / 3600) % 24;
+  const m = Math.floor(s / 60) % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return d
+    ? `${d}d ${h}h ${pad(m)}m`
+    : `${h}h ${pad(m)}m ${pad(s % 60)}s`;
+}
+
+function when(ms) {
+  return new Date(ms).toLocaleString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function CouponPreview({ content: c }) {
   const [copied, setCopied] = useState("");
-  const [expired, setExpired] = useState(false);
+  // Null until mounted so the server render never disagrees with the client.
+  const [now, setNow] = useState(null);
   useEffect(() => {
-    const refresh = () =>
-      setExpired(
-        !!c.expiration &&
-          Date.now() > new Date(`${c.expiration}T23:59:59Z`).getTime(),
-      );
-    refresh();
-    const timer = setInterval(refresh, 60000);
+    const tick = () => setNow(Date.now());
+    tick();
+    const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [c.expiration]);
+  }, []);
   const free = c.kind === "free";
   const Icon = free ? Gift : Ticket;
-  const expiry = c.expiration
-    ? new Date(`${c.expiration}T00:00:00Z`).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "UTC",
-      })
-    : "";
+  const startsAt = Date.parse(c.startsAt) || null;
+  // Older coupons stored only a date; they ran to the end of that day (UTC).
+  const endsAt =
+    Date.parse(c.expiresAt) ||
+    (c.expiration ? Date.parse(`${c.expiration}T23:59:59Z`) : null);
+  const upcoming = now !== null && startsAt && now < startsAt;
+  const expired = now !== null && endsAt && now > endsAt;
+  const unavailable = upcoming || expired;
 
   return (
     <article className="relative flex min-h-full flex-col bg-gradient-to-b from-orange-500 via-orange-400 to-amber-50 px-[5%] pb-6 pt-6 text-slate-900">
@@ -78,14 +96,14 @@ export default function CouponPreview({ content: c }) {
         </div>
 
         <div className="px-6 pb-6 pt-5 text-center">
-          {c.code && (
+          {c.code && !upcoming && (
             <>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                 Your code
               </p>
               <button
                 type="button"
-                disabled={expired}
+                disabled={unavailable}
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(c.code);
@@ -109,16 +127,25 @@ export default function CouponPreview({ content: c }) {
             </>
           )}
           <p
-            className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ${expired ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-700"}`}
+            className={`mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold ${expired ? "bg-red-50 text-red-600" : upcoming ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}
           >
             <Clock className="h-3 w-3" />
             {expired
               ? "This offer has expired"
-              : expiry
-                ? `Valid until ${expiry}`
-                : "Limited-time offer"}
+              : upcoming
+                ? `Starts in ${timeLeft(startsAt - now)}`
+                : endsAt && now !== null
+                  ? `Expires in ${timeLeft(endsAt - now)}`
+                  : "Limited-time offer"}
           </p>
-          {!expired && (
+          {now !== null && (startsAt || endsAt) && !expired && (
+            <p className="mt-2 text-[11px] text-slate-400">
+              {upcoming ? `Available from ${when(startsAt)}` : ""}
+              {upcoming && endsAt ? " · " : ""}
+              {endsAt ? `Valid until ${when(endsAt)}` : ""}
+            </p>
+          )}
+          {!unavailable && (
             <div className="mt-4">
               <Action href={c.ctaUrl} className="!bg-orange-600">
                 {free ? "Claim your gift" : "Redeem online"}

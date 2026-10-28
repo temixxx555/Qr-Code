@@ -301,12 +301,20 @@ export default function Page() {
           </p>
         </div>
 
-        <Link
-          href='/qr'
-          className='inline-flex w-full shrink-0 items-center justify-center rounded-xl bg-[#20c75a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1bb34f] sm:w-auto'
-        >
-          + Create QR code
-        </Link>
+        <div className='flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row'>
+          <Link
+            href='/dashboard/qrcodes/bulk'
+            className='inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50'
+          >
+            Bulk create from CSV
+          </Link>
+          <Link
+            href='/qr'
+            className='inline-flex items-center justify-center rounded-xl bg-[#20c75a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1bb34f]'
+          >
+            + Create QR code
+          </Link>
+        </div>
       </div>
 
       {/* FOLDER MANAGER */}

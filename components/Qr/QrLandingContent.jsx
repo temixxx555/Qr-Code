@@ -16,6 +16,7 @@ import apps from "./types/apps/appsPreview";
 import coupon from "./types/coupon/couponPreview";
 import product from "./types/product/productPreview";
 import wedding from "./types/wedding/weddingPreview";
+import event from "./types/event/eventPreview";
 const registry = {
   website,
   pdf,
@@ -35,6 +36,7 @@ const registry = {
   coupon,
   product,
   wedding,
+  event,
 };
 export default function QrLandingContent({ type, content }) {
   const Component = registry[type === "app" ? "apps" : type];

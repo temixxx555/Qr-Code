@@ -76,4 +76,15 @@ export const fixtures = {
     speakers: [{ name: "Ada Obi", role: "CTO" }],
     schedule: [{ title: "Keynote", time: "09:30" }],
   },
+  nutrition: {
+    name: "Honey Oat Granola",
+    expiryDate: "2027-06-30",
+    nutrients: [{ name: "Protein", amount: "6 g", dailyValue: "12" }],
+  },
+  autoshop: {
+    model: "Toyota Corolla",
+    year: "2019",
+    nextDueDate: "2027-01-28",
+    log: [{ date: "2026-10-28", mileage: "84,500 km", oilChange: true }],
+  },
 };

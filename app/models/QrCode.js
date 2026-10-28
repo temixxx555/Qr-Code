@@ -41,6 +41,8 @@ const QRCodeSchema = new mongoose.Schema(
         "product",
         "wedding",
         "event",
+        "nutrition",
+        "autoshop",
         "links",
         "video",
         "images",

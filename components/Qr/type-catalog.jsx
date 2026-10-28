@@ -15,6 +15,8 @@ import {
   Ticket,
   Heart,
   PartyPopper,
+  Salad,
+  Car,
 } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 export const qrTypes = [
@@ -343,6 +345,40 @@ qrTypes.push(
       subline: "Friday, 20 November 2026",
       body: "Agenda, speakers, directions and tickets in one scan.",
       footer: "Get Tickets",
+    },
+  },
+  {
+    id: "nutrition",
+    label: "Nutrition",
+    icon: Salad,
+    title: "Nutrition",
+    description:
+      "Put the full product label online — ingredients, allergens, nutrition facts, directions, storage and expiry.",
+    color: "#20c75a",
+    mockupBg: "#15803d",
+    mockup: {
+      type: "nutrition",
+      headline: "Honey Oat Granola",
+      subline: "500 g · Made in Nigeria",
+      body: "Ingredients, allergens and nutrition facts in one scan.",
+      footer: "View Label",
+    },
+  },
+  {
+    id: "autoshop",
+    label: "Auto Shop",
+    icon: Car,
+    title: "Auto Shop",
+    description:
+      "A digital service sticker — vehicle details, maintenance log and a countdown to the next service.",
+    color: "#20c75a",
+    mockupBg: "#0f172a",
+    mockup: {
+      type: "autoshop",
+      headline: "2019 Toyota Corolla",
+      subline: "Next service in 23 days",
+      body: "Oil changes, fluids and brake work, all on record.",
+      footer: "Book a Service",
     },
   },
 );

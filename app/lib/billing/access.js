@@ -60,14 +60,31 @@ export function sameOrigin(request) {
     } catch {}
   }
 
-  // Compare against the configured public domain, not the internal request.url.
-  let expected = null;
+  let originHost = null;
   try {
-    expected = publicOrigin(request);
+    originHost = new URL(origin).host.toLowerCase();
   } catch {}
 
-  if (!origin || !expected || origin !== expected)
+  // Accept the configured public domain and the host the browser addressed.
+  // Behind Hostinger's proxy request.url is the internal bind address, so the
+  // public host comes from X-Forwarded-Host / Host. A cross-site request still
+  // fails: its Origin is the attacker's site, not the host it was sent to.
+  const allowed = new Set();
+  for (const header of ["x-forwarded-host", "host"]) {
+    const host = request.headers.get(header)?.split(",")[0]?.trim();
+    if (host) allowed.add(host.toLowerCase());
+  }
+  try {
+    allowed.add(new URL(publicOrigin(request)).host.toLowerCase());
+  } catch {}
+
+  if (!originHost || !allowed.has(originHost)) {
+    console.warn("Rejected billing request origin:", {
+      origin,
+      allowed: [...allowed],
+    });
     throw new BillingError("Invalid request origin.", 403);
+  }
 }
 export async function billingUser() {
   const auth = await getAuthenticatedUser();

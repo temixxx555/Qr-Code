@@ -5,6 +5,7 @@ import crypto from "node:crypto";
 
 import Scan from "@/app/models/Scan";
 import { scanLocation, deviceBrand, language } from "@/lib/scan-details";
+import { lookupIp } from "@/app/lib/geoip";
 import QRCode from "@/app/models/QrCode";
 
 export async function recordScan(qr, request, visitor) {
@@ -59,11 +60,16 @@ export async function recordScan(qr, request, visitor) {
       }
     }
 
+    // Edge headers first (Vercel/Cloudflare), else look the IP up ourselves.
+    let location = scanLocation(request);
+    if (location.country === "Unknown")
+      location = (await lookupIp(ipAddress)) || location;
+
     await Scan.create({
       qrCodeId: qr._id,
       visitorId: visitorHash,
       isNewVisitor: first,
-      ...scanLocation(request),
+      ...location,
       brand: deviceBrand(ua),
       language: language(request),
 

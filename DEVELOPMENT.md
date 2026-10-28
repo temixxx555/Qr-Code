@@ -42,10 +42,23 @@ Never expose these as `NEXT_PUBLIC_*` values.
   Replace `app/lib/storage.js` with an object-storage adapter for such deployments.
 - `ANALYTICS_HASH_SECRET`: optional dedicated secret for anonymous visitor hashing.
   Defaults to the access-token secret. Keep it stable to preserve visitor counts.
-- Location analytics read geolocation headers added by the hosting edge. Vercel
-  adds them automatically. Anywhere else, put the domain behind Cloudflare (below).
-  Without these headers, scans are stored with an Unknown country and no city or
-  map coordinates.
+- Location analytics read geolocation headers added by the hosting edge (Vercel
+  automatically, or Cloudflare as below). When there are none, the scan's IP is
+  looked up with ipdata.co if `IPDATA_API_KEY` is set (below). Otherwise scans are
+  stored with an Unknown country and no city or map coordinates.
+
+### Location analytics on Hostinger (ipdata.co, no Cloudflare)
+
+1. Create a free account at https://ipdata.co and copy your API key. The free
+   plan allows commercial use with attribution (credit ipdata on the site); check
+   the current limits on their pricing page.
+2. In hPanel, open the Node.js app's **Environment variables**, add
+   `IPDATA_API_KEY` with that key, and redeploy/restart the app.
+3. Scan a QR code from your phone on mobile data and check the country, city and
+   map marker. Failed lookups are logged as "IP lookup failed <status>".
+
+The lookup runs after the redirect, so it never slows a scan down. Only public IPs
+are sent, and only the scanner's IP leaves the server.
 
 ### Location analytics on Hostinger (Cloudflare)
 

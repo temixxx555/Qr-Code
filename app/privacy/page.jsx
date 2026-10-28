@@ -174,6 +174,11 @@ const sections = [
             </span>{" "}
             that deliver the website to you.
           </li>
+          <li>
+            <span className="font-medium text-[#101828]">ipdata.co</span>{" "}
+            to estimate the approximate location (such as country or city) of
+            a dynamic QR code scan from the scanner&apos;s IP address.
+          </li>
         </ul>
         <p>
           We may also disclose information if required by law, a court order or

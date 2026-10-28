@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scanLocation, deviceBrand, language } from "../lib/scan-details.js";
+import {
+  scanLocation,
+  lookupLocation,
+  deviceBrand,
+  language,
+} from "../lib/scan-details.js";
 
 const request = (headers) => new Request("https://example.com", { headers });
 
@@ -44,6 +49,33 @@ test("falls back to Cloudflare and rejects bad values", () => {
   assert.equal(location.timezone, null);
   assert.equal(location.city, "%E0%A4%A");
   assert.equal(scanLocation(request({})).country, "Unknown");
+});
+test("reads and sanitizes an ipdata lookup", () => {
+  assert.deepEqual(
+    lookupLocation({
+      country_code: "ng",
+      region: "Lagos",
+      city: "Ikeja",
+      postal: "100271",
+      latitude: 6.58123,
+      longitude: 3.35678,
+      time_zone: { name: "Africa/Lagos" },
+    }),
+    {
+      country: "NG",
+      region: "Lagos",
+      city: "Ikeja",
+      postalCode: "100271",
+      latitude: 6.58,
+      longitude: 3.36,
+      timezone: "Africa/Lagos",
+    },
+  );
+  const bad = lookupLocation({ country_code: 5, latitude: 999, time_zone: "Nope" });
+  assert.equal(bad.country, "Unknown");
+  assert.equal(bad.latitude, null);
+  assert.equal(bad.timezone, null);
+  assert.equal(lookupLocation().country, "Unknown");
 });
 test("detects common phone brands and languages", () => {
   assert.equal(deviceBrand("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)"), "Apple iPhone");

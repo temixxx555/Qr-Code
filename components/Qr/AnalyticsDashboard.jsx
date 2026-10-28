@@ -455,6 +455,12 @@ export default function AnalyticsDashboard({ qrId = "" }) {
                   recorded for new scans on your live site.
                 </p>
               )}
+              <p className="mt-2 text-xs text-slate-400">
+                IP location by{" "}
+                <a href="https://ipdata.co" target="_blank" rel="noopener noreferrer" className="underline">
+                  ipdata.co
+                </a>
+              </p>
             </Card>
 
             <div className="grid gap-4 md:grid-cols-2">

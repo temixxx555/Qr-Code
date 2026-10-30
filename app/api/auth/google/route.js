@@ -10,6 +10,8 @@ import {
 } from "@/app/lib/jwt.js";
 import { createEmailChallenge } from "@/app/lib/auth-challenges";
 import { allowAttempt } from "@/app/lib/rate-limit";
+import { settings } from "@/app/lib/billing/access.js";
+import { FREE_TRIAL_DAYS } from "@/lib/billing-rules.js";
 
 export async function POST(request) {
   try {
@@ -51,6 +53,9 @@ export async function POST(request) {
 
     // If no account exists, create one
     if (!user) {
+      const trialStartedAt = (await settings()).trialEnabled
+        ? new Date()
+        : null;
       user = await User.create({
         name,
         email,
@@ -58,6 +63,10 @@ export async function POST(request) {
         googleUid,
         authProvider: "google",
         isVerified: true,
+        trialStartedAt,
+        trialExpiresAt: trialStartedAt
+          ? new Date(trialStartedAt.getTime() + FREE_TRIAL_DAYS * 86400000)
+          : null,
       });
     } else {
       // Existing email/password account can also use Google

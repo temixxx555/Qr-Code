@@ -118,7 +118,11 @@ export default function AuthForm({ mode }) {
         }
         router.push("/dashboard");
       } else {
-        setSuccess("Account created successfully. You can now log in.");
+        setSuccess(
+          result.user?.trialExpiresAt
+            ? "Account created. Your free 14-day trial starts now. You can log in to continue."
+            : "Account created successfully. You can now log in.",
+        );
 
         setTimeout(() => {
           router.push("/login");

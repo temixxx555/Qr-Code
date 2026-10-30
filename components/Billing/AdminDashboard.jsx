@@ -41,6 +41,7 @@ export default function AdminDashboard() {
     [password, setPassword] = useState("");
   const [policy, setPolicy] = useState(null),
     [maintenance, setMaintenance] = useState(false),
+    [trialEnabled, setTrialEnabled] = useState(true),
     [vatBps, setVatBps] = useState(750),
     [plan, setPlan] = useState({
       key: "monthly",
@@ -56,6 +57,7 @@ export default function AdminDashboard() {
     setOverview(data);
     setPolicy(data.settings.referral);
     setMaintenance(data.settings.maintenance);
+    setTrialEnabled(data.settings.trialEnabled);
     setVatBps(data.settings.vatBps);
     setSiteContent(data.siteContent);
     setPlan((current) =>
@@ -297,7 +299,7 @@ export default function AdminDashboard() {
                         Review settings change button below.
                       </p>
                     </Card>
-                    <Card title="Referral programme">
+                    <Card title="Pricing, referrals & trial">
                       <div className="grid gap-4 sm:grid-cols-2">
                         {[
                           ["discountBps", "First payment discount (%)", 100],
@@ -358,9 +360,18 @@ export default function AdminDashboard() {
                         />
                         Pause new checkouts for maintenance
                       </label>
+                      <label className="mt-4 flex gap-3 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={trialEnabled}
+                          onChange={(e) => setTrialEnabled(e.target.checked)}
+                        />
+                        Give new signups a free 14-day trial
+                      </label>
                       <p className="mt-4 text-xs text-slate-500">
-                        Changes apply to new orders. Existing commission
-                        agreements keep their saved settings.
+                        Pricing and referral changes apply to new orders.
+                        Turning the trial off stops new trial grants; active
+                        trials keep their original expiry date.
                       </p>
                       <button
                         disabled={!superadmin}
@@ -370,6 +381,7 @@ export default function AdminDashboard() {
                             action: "settings",
                             referral: policy,
                             maintenance,
+                            trialEnabled,
                             vatBps,
                           })
                         }

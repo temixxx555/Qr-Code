@@ -47,6 +47,7 @@ export async function GET() {
           isVerified: user.isVerified,
           twoFactorEnabled: Boolean(user.twoFactorEnabled),
           adminRole: user.adminRole || "none",
+          trialExpiresAt: user.trialExpiresAt || null,
         },
       },
       { status: 200 }

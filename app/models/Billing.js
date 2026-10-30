@@ -152,6 +152,7 @@ export const BillingSettings = model("BillingSettings", {
   referral: Schema.Types.Mixed,
   vatBps: Number,
   maintenance: { type: Boolean, default: false },
+  trialEnabled: { type: Boolean, default: true },
 });
 export const AuditLog = model("BillingAuditLog", {
   actorId: id,

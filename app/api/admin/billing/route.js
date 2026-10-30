@@ -228,7 +228,8 @@ export async function POST(request) {
         throw new BillingError("Set a VAT rate between 0% and 50%.");
       if (
         typeof value.renewalCommissions !== "boolean" ||
-        typeof body.maintenance !== "boolean"
+        typeof body.maintenance !== "boolean" ||
+        typeof body.trialEnabled !== "boolean"
       )
         throw new BillingError("Invalid settings.");
       const before = await settings();
@@ -245,7 +246,12 @@ export async function POST(request) {
       await transaction(async (session) => {
         await BillingSettings.findOneAndUpdate(
           { _id: "global" },
-          { referral, maintenance: body.maintenance, vatBps: body.vatBps },
+          {
+            referral,
+            maintenance: body.maintenance,
+            vatBps: body.vatBps,
+            trialEnabled: body.trialEnabled,
+          },
           { upsert: true, session },
         );
         await AuditLog.create(
@@ -260,6 +266,7 @@ export async function POST(request) {
                 referral,
                 maintenance: body.maintenance,
                 vatBps: body.vatBps,
+                trialEnabled: body.trialEnabled,
               },
             },
           ],

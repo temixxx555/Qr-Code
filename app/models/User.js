@@ -47,6 +47,16 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+    trialStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    trialExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
     twoFactorEnabled: {
       type: Boolean,
       default: false,

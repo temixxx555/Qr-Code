@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const menuItems = [
   { name: "Referral earnings", href: "/dashboard/referrals", icon: Wallet },
@@ -62,6 +63,25 @@ const supportItems = [
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState(null);
+
+  useEffect(() => {
+    const expiresAt = user?.trialExpiresAt
+      ? new Date(user.trialExpiresAt).getTime()
+      : null;
+    if (!expiresAt) {
+      setTrialDaysRemaining(null);
+      return;
+    }
+
+    const updateRemaining = () =>
+      setTrialDaysRemaining(
+        Math.max(0, Math.ceil((expiresAt - Date.now()) / 86400000)),
+      );
+    updateRemaining();
+    const timer = window.setInterval(updateRemaining, 60000);
+    return () => window.clearInterval(timer);
+  }, [user?.trialExpiresAt]);
 
   function closeMobileSidebar() {
     if (setSidebarOpen) {
@@ -241,7 +261,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           <div className='mb-5 flex items-center gap-3 text-gray-700'>
             <Clock3 size={20} />
 
-            <span className='text-[16px] font-medium'>Your QR workspace</span>
+            <span className='text-[16px] font-medium'>
+              {trialDaysRemaining !== null
+                ? trialDaysRemaining > 0
+                  ? `${trialDaysRemaining} ${trialDaysRemaining === 1 ? "day" : "days"} remaining`
+                  : "Your trial has ended"
+                : "Your QR workspace"}
+            </span>
           </div>
 
           <Link

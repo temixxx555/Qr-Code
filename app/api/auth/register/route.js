@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import User from "../../../models/User.js";
 import { connectDB } from "@/app/lib/mongodb.js";
+import { settings } from "@/app/lib/billing/access.js";
+import { FREE_TRIAL_DAYS } from "@/lib/billing-rules.js";
 
 export async function POST(request) {
   try {
@@ -65,12 +67,18 @@ export async function POST(request) {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
+    const trialSettings = await settings();
+    const trialStartedAt = trialSettings.trialEnabled ? new Date() : null;
 
     // Create user
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       password: hashedPassword,
+      trialStartedAt,
+      trialExpiresAt: trialStartedAt
+        ? new Date(trialStartedAt.getTime() + FREE_TRIAL_DAYS * 86400000)
+        : null,
     });
 
     return NextResponse.json(
@@ -82,6 +90,7 @@ export async function POST(request) {
           name: user.name,
           email: user.email,
           isVerified: user.isVerified,
+          trialExpiresAt: user.trialExpiresAt || null,
         },
       },
       { status: 201 }

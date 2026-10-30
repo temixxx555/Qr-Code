@@ -114,6 +114,7 @@ export async function settings() {
   const row = await BillingSettings.findById("global").lean();
   return {
     maintenance: row?.maintenance || false,
+    trialEnabled: row?.trialEnabled !== false,
     vatBps: Number.isInteger(row?.vatBps) ? row.vatBps : VAT_DEFAULT_BPS,
     referral: { ...REFERRAL_DEFAULTS, ...row?.referral },
   };
@@ -146,6 +147,8 @@ export async function context() {
       ? "suspended"
       : isAdministrator(user)
         ? "admin"
+        : premium && new Date(user.trialExpiresAt) > new Date()
+          ? "trial"
         : premium && !hasPremium(subscription)
           ? "complimentary"
           : subscriptionState(subscription),
@@ -153,7 +156,9 @@ export async function context() {
 }
 export async function premiumGate(userId) {
   await connectDB();
-  const user = await User.findById(userId).select("suspended adminRole");
+  const user = await User.findById(userId).select(
+    "suspended adminRole trialExpiresAt",
+  );
   const workspace = await Workspace.findOne({ ownerId: userId });
   const subscription =
     workspace &&

@@ -124,6 +124,7 @@ export async function POST(request) {
           name: user.name,
           email: user.email,
           isVerified: user.isVerified,
+          trialExpiresAt: user.trialExpiresAt || null,
         },
       },
       { status: 200 },

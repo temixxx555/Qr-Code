@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Local uploaded media
 /.uploads/
+
+# Account cleanup backups (contain personal data)
+/backups/

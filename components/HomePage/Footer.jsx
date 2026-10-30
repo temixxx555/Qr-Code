@@ -11,6 +11,7 @@ import {
 import { FaXTwitter } from "react-icons/fa6";
 import { Mail, Phone } from "lucide-react";
 import { SITE_DEFAULTS, SOCIAL_PLATFORMS } from "@/lib/site-content";
+import Image from "next/image";
 
 const socialIcons = {
   facebook: FaFacebook,
@@ -24,56 +25,7 @@ const socialIcons = {
 
 const QRLogo = () => {
   return (
-    <svg
-      width='64'
-      height='64'
-      viewBox='0 0 64 64'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-      className='h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16'
-    >
-      {/* Top-left QR */}
-      <rect
-        x='6'
-        y='6'
-        width='20'
-        height='20'
-        rx='5'
-        stroke='#22C55E'
-        strokeWidth='6'
-      />
-      <rect x='12' y='12' width='8' height='8' rx='2' fill='#22C55E' />
-
-      {/* Top-right QR */}
-      <rect
-        x='38'
-        y='6'
-        width='20'
-        height='20'
-        rx='5'
-        stroke='#22C55E'
-        strokeWidth='6'
-      />
-      <rect x='44' y='12' width='8' height='8' rx='2' fill='#22C55E' />
-
-      {/* Bottom-left QR */}
-      <rect
-        x='6'
-        y='38'
-        width='20'
-        height='20'
-        rx='5'
-        stroke='#22C55E'
-        strokeWidth='6'
-      />
-      <rect x='12' y='44' width='8' height='8' rx='2' fill='#22C55E' />
-
-      {/* QR pattern */}
-      <rect x='34' y='34' width='8' height='8' rx='2' fill='#22C55E' />
-      <rect x='46' y='34' width='12' height='8' rx='2' fill='#22C55E' />
-      <rect x='34' y='46' width='8' height='12' rx='2' fill='#22C55E' />
-      <rect x='46' y='46' width='8' height='8' rx='2' fill='#22C55E' />
-    </svg>
+   <Image src={"/logo.png"} width={100} height={100} alt='logo' className="w-[100px] rounded-xl "/>
   );
 };
 

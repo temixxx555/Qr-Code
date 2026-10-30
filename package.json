@@ -55,10 +55,14 @@
     },
     "follow-redirects": "1.16.1",
     "@firebase/firestore": {
-      "@grpc/grpc-js": "1.14.6"
+      "@grpc/grpc-js": "1.14.6",
+      "re2js": "2.8.7"
     },
     "gaxios": {
       "uuid": "14.0.3"
-    }
+    },
+    "systeminformation": "5.33.16",
+    "body-parser": "2.4.0",
+    "fast-uri": "3.1.9"
   }
 }

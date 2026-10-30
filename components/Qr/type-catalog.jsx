@@ -349,9 +349,9 @@ qrTypes.push(
   },
   {
     id: "nutrition",
-    label: "Nutrition",
+    label: "Label and Nutritional Facts",
     icon: Salad,
-    title: "Nutrition",
+    title: "Label and Nutritional Facts",
     description:
       "Put the full product label online — ingredients, allergens, nutrition facts, directions, storage and expiry.",
     color: "#20c75a",

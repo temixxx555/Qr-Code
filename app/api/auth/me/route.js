@@ -48,6 +48,7 @@ export async function GET() {
           twoFactorEnabled: Boolean(user.twoFactorEnabled),
           adminRole: user.adminRole || "none",
           trialExpiresAt: user.trialExpiresAt || null,
+          hasPassword: Boolean(user.password),
         },
       },
       { status: 200 }

@@ -28,24 +28,24 @@ export default function QrFrame({ frame, frameColor, frameText, qrRef }) {
   };
 
   const getWrapperStyle = () => {
+    // shadow must be checked first, otherwise it never gets its box-shadow
+    if (frame === "shadow") {
+      return {
+        borderColor: frameColor,
+        boxShadow: `7px 7px 0 ${frameColor}`,
+      };
+    }
+
     if (
       frame === "simple" ||
       frame === "scan" ||
       frame === "rounded" ||
       frame === "ticket" ||
       frame === "badge" ||
-      frame === "gift" ||
-      frame === "shadow"
+      frame === "gift"
     ) {
       return {
         borderColor: frameColor,
-      };
-    }
-
-    if (frame === "shadow") {
-      return {
-        borderColor: frameColor,
-        boxShadow: `7px 7px 0 ${frameColor}`,
       };
     }
 
@@ -58,7 +58,7 @@ export default function QrFrame({ frame, frameColor, frameText, qrRef }) {
 
       {frame === "ribbon" && (
         <div
-          className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2 rounded px-5 py-2 text-[11px] font-bold text-white shadow"
+          className="absolute left-1/2 top-0 z-10 max-w-full -translate-x-1/2 -translate-y-1/2 truncate whitespace-nowrap rounded px-5 py-2 text-[11px] font-bold text-white shadow"
           style={{
             backgroundColor: frameColor,
           }}
@@ -103,7 +103,7 @@ export default function QrFrame({ frame, frameColor, frameText, qrRef }) {
 
         {hasText && frame !== "ribbon" && (
           <div
-            className={`relative z-20 px-4 py-3 text-center text-sm font-bold ${
+            className={`relative z-20 flex h-12 w-0 min-w-full items-center justify-center px-4 text-center text-sm font-bold ${
               frame === "ticket"
                 ? "border-t border-dashed bg-white"
                 : "text-white"
@@ -119,7 +119,9 @@ export default function QrFrame({ frame, frameColor, frameText, qrRef }) {
                   }
             }
           >
-            {frameText || "Scan me!"}
+            <span className="block min-w-0 truncate">
+              {frameText || "Scan me!"}
+            </span>
           </div>
         )}
       </div>

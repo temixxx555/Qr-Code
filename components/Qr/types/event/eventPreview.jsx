@@ -41,9 +41,10 @@ export default function EventPreview({ content: c }) {
   const videos = (Array.isArray(c.videos) ? c.videos : []).filter((v) =>
     safeUrl(v?.url),
   );
-  const schedule = (Array.isArray(c.schedule) ? c.schedule : []).filter(
-    (e) => e?.title,
-  );
+  // Programme is shown in time order; items without a time go last
+  const schedule = (Array.isArray(c.schedule) ? c.schedule : [])
+    .filter((e) => e?.title)
+    .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
   const speakers = (Array.isArray(c.speakers) ? c.speakers : []).filter(
     (p) => p?.name,
   );
@@ -96,12 +97,28 @@ export default function EventPreview({ content: c }) {
       </header>
 
       <div className="relative mx-auto -mt-24 w-full max-w-[620px] px-[6%] pb-8 text-center">
+        {/* 1. What kind of event */}
         <p
           className="text-[10px] font-semibold uppercase tracking-[0.35em]"
           style={{ color: t.accent }}
         >
           {kind.kicker}
         </p>
+
+        {/* 2. Event name */}
+        <h1 className="mt-4 break-words font-serif text-[38px] leading-[1.08] tracking-tight">
+          {title}
+        </h1>
+
+        {/* 3. Who is hosting */}
+        {c.host && (
+          <p className="mt-3 text-sm" style={{ color: t.muted }}>
+            {kind.hostPrefix ? `${kind.hostPrefix} ` : ""}
+            <strong style={{ color: t.text }}>{c.host}</strong>
+          </p>
+        )}
+
+        {/* 4. Short description */}
         {c.intro && (
           <p
             className="mx-auto mt-4 max-w-[300px] whitespace-pre-line text-[13px] leading-6"
@@ -110,15 +127,8 @@ export default function EventPreview({ content: c }) {
             {c.intro}
           </p>
         )}
-        <h1 className="mt-4 break-words font-serif text-[38px] leading-[1.08] tracking-tight">
-          {title}
-        </h1>
-        {c.host && (
-          <p className="mt-3 text-sm" style={{ color: t.muted }}>
-            {kind.hostPrefix ? `${kind.hostPrefix} ` : ""}
-            <strong style={{ color: t.text }}>{c.host}</strong>
-          </p>
-        )}
+
+        {/* 5. When */}
         {longDate && (
           <p className="mt-4 text-sm font-medium tracking-wide">{longDate}</p>
         )}
@@ -138,9 +148,8 @@ export default function EventPreview({ content: c }) {
           />
         )}
 
-        {/* DETAILS */}
-        {(longDate ||
-          timeRange ||
+        {/* DETAILS (the date is already shown above, so it is not repeated here) */}
+        {(timeRange ||
           c.venue ||
           c.address ||
           c.dressCode ||
@@ -149,12 +158,6 @@ export default function EventPreview({ content: c }) {
             className="mt-8 space-y-3 rounded-[24px] border p-5 text-left"
             style={card}
           >
-            {longDate && (
-              <p className="flex items-start gap-3 text-[13px]">
-                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" style={{ color: t.accent }} />
-                {longDate}
-              </p>
-            )}
             {timeRange && (
               <p className="flex items-start gap-3 text-[13px]">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0" style={{ color: t.accent }} />
@@ -219,6 +222,45 @@ export default function EventPreview({ content: c }) {
                 <Ticket className="h-4 w-4" /> Get tickets
               </a>
             )}
+          </section>
+        )}
+
+        {/* RSVP (moved up so guests see how to respond before the long content) */}
+        {(rsvpPhone || safeUrl(c.rsvpUrl)) && (
+          <section className="mt-6 rounded-[24px] border p-5" style={card}>
+            <Heading accent={t.accent}>RSVP</Heading>
+            {rsvpBy && (
+              <p className="mb-4 text-xs" style={{ color: t.muted }}>
+                Kindly respond by {rsvpBy}
+              </p>
+            )}
+            <div className="space-y-2">
+              {rsvpPhone && (
+                <a
+                  href={whatsappUrl({
+                    phone: rsvpPhone,
+                    message: `Hi! I'm confirming my attendance at ${title}${longDate ? ` on ${longDate}` : ""}.`,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`text-white ${button}`}
+                  style={{ background: t.accent }}
+                >
+                  <MessageCircle className="h-4 w-4" /> RSVP on WhatsApp
+                </a>
+              )}
+              {safeUrl(c.rsvpUrl) && (
+                <a
+                  href={safeUrl(c.rsvpUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`border ${button}`}
+                  style={{ borderColor: t.accent, color: t.accent }}
+                >
+                  <ClipboardList className="h-4 w-4" /> Fill RSVP form
+                </a>
+              )}
+            </div>
           </section>
         )}
 
@@ -377,48 +419,9 @@ export default function EventPreview({ content: c }) {
           </section>
         )}
 
-        {/* RSVP */}
-        {(rsvpPhone || safeUrl(c.rsvpUrl)) && (
-          <section className="mt-10 rounded-[24px] border p-5" style={card}>
-            <Heading accent={t.accent}>RSVP</Heading>
-            {rsvpBy && (
-              <p className="mb-4 text-xs" style={{ color: t.muted }}>
-                Kindly respond by {rsvpBy}
-              </p>
-            )}
-            <div className="space-y-2">
-              {rsvpPhone && (
-                <a
-                  href={whatsappUrl({
-                    phone: rsvpPhone,
-                    message: `Hi! I'm confirming my attendance at ${title}${longDate ? ` on ${longDate}` : ""}.`,
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`text-white ${button}`}
-                  style={{ background: t.accent }}
-                >
-                  <MessageCircle className="h-4 w-4" /> RSVP on WhatsApp
-                </a>
-              )}
-              {safeUrl(c.rsvpUrl) && (
-                <a
-                  href={safeUrl(c.rsvpUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`border ${button}`}
-                  style={{ borderColor: t.accent, color: t.accent }}
-                >
-                  <ClipboardList className="h-4 w-4" /> Fill RSVP form
-                </a>
-              )}
-            </div>
-          </section>
-        )}
-
         {/* GIFTS / CONTACT */}
         {(c.giftDetails || c.contactPhone) && (
-          <section className="mt-6 space-y-4 rounded-[24px] border p-5 text-left" style={card}>
+          <section className="mt-10 space-y-4 rounded-[24px] border p-5 text-left" style={card}>
             {c.giftDetails && (
               <p className="flex items-start gap-3 whitespace-pre-line text-[13px] leading-6" style={{ color: t.muted }}>
                 <Gift className="mt-1 h-4 w-4 shrink-0" style={{ color: t.accent }} />

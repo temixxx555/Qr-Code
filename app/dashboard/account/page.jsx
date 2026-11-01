@@ -12,6 +12,9 @@ export default function AccountPage() {
   const [verificationChallengeId, setVerificationChallengeId] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   useEffect(() => {
     api
       .get("/auth/me")
@@ -92,6 +95,31 @@ export default function AccountPage() {
       setBusy(false);
     }
   };
+  const changePassword = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data } = await api.post("/auth/change-password", {
+        currentPassword,
+        newPassword,
+        confirmPassword: confirmNewPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setUser((current) => ({ ...current, hasPassword: true }));
+      setMessage(data.message);
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "Could not update your password. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className='mx-auto max-w-6xl'>
       <p className='text-sm font-medium text-emerald-600'>Dashboard</p>
@@ -123,6 +151,70 @@ export default function AccountPage() {
               </p>
             )}
             <div className='mt-6 space-y-6 border-t pt-6'>
+              <form onSubmit={changePassword}>
+                <p className='text-sm font-semibold text-slate-900'>
+                  {user.hasPassword ? "Change password" : "Set a password"}
+                </p>
+                {!user.hasPassword && (
+                  <p className='mt-1 text-sm text-slate-600'>
+                    Your account uses Google sign-in. You can set a password to also sign in with your email.
+                  </p>
+                )}
+                <div className='mt-3 grid gap-3 sm:grid-cols-2'>
+                  {user.hasPassword && (
+                    <label className='text-sm text-slate-600 sm:col-span-2'>
+                      Current password
+                      <input
+                        type='password'
+                        autoComplete='current-password'
+                        required
+                        maxLength={128}
+                        value={currentPassword}
+                        onChange={(event) => setCurrentPassword(event.target.value)}
+                        className='mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900'
+                      />
+                    </label>
+                  )}
+                  <label className='text-sm text-slate-600'>
+                    New password
+                    <input
+                      type='password'
+                      autoComplete='new-password'
+                      required
+                      minLength={8}
+                      maxLength={128}
+                      pattern='(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,128}'
+                      title='Use at least 8 characters, including a capital letter and a special character.'
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      className='mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900'
+                    />
+                  </label>
+                  <label className='text-sm text-slate-600'>
+                    Confirm new password
+                    <input
+                      type='password'
+                      autoComplete='new-password'
+                      required
+                      minLength={8}
+                      maxLength={128}
+                      value={confirmNewPassword}
+                      onChange={(event) => setConfirmNewPassword(event.target.value)}
+                      className='mt-1 h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900'
+                    />
+                  </label>
+                </div>
+                <p className='mt-2 text-xs text-slate-500'>
+                  Use 8–128 characters, including a capital letter and a special character.
+                </p>
+                <button
+                  type='submit'
+                  disabled={busy || !newPassword || !confirmNewPassword}
+                  className='mt-3 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60'
+                >
+                  {busy ? "Updating password…" : "Update password"}
+                </button>
+              </form>
               <div>
                 <p className='text-sm font-semibold text-slate-900'>Email verification</p>
                 <p className='mt-1 text-sm text-slate-600'>

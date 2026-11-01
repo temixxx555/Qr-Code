@@ -126,9 +126,10 @@ export default function WeddingPreview({ content: c }) {
   const videos = (Array.isArray(c.videos) ? c.videos : []).filter((v) =>
     safeUrl(v?.url),
   );
-  const schedule = (Array.isArray(c.schedule) ? c.schedule : []).filter(
-    (e) => e?.title,
-  );
+  // Programme is shown in time order; items without a time go last
+  const schedule = (Array.isArray(c.schedule) ? c.schedule : [])
+    .filter((e) => e?.title)
+    .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
   const longDate = formatDate(c.date, {
     weekday: "long",
     day: "numeric",
@@ -172,17 +173,15 @@ export default function WeddingPreview({ content: c }) {
       </header>
 
       <div className="relative mx-auto -mt-24 w-full max-w-[620px] px-[6%] pb-8 text-center">
+        {/* 1. Greeting */}
         <p
           className="text-[10px] font-semibold uppercase tracking-[0.35em]"
           style={{ color: t.accent }}
         >
           {celebration ? "Thank you for celebrating with us" : "You're invited"}
         </p>
-        {c.intro && (
-          <p className="mx-auto mt-4 max-w-[300px] whitespace-pre-line text-[13px] leading-6" style={{ color: t.muted }}>
-            {c.intro}
-          </p>
-        )}
+
+        {/* 2. Who is getting married */}
         <h1 className="mt-4 break-words font-serif text-[40px] leading-[1.05] tracking-tight">
           {names[0]}
           <span
@@ -193,6 +192,15 @@ export default function WeddingPreview({ content: c }) {
           </span>
           {names[1]}
         </h1>
+
+        {/* 3. Short intro */}
+        {c.intro && (
+          <p className="mx-auto mt-4 max-w-[300px] whitespace-pre-line text-[13px] leading-6" style={{ color: t.muted }}>
+            {c.intro}
+          </p>
+        )}
+
+        {/* 4. When */}
         {longDate && (
           <p className="mt-4 text-sm font-medium tracking-wide">{longDate}</p>
         )}
@@ -206,18 +214,12 @@ export default function WeddingPreview({ content: c }) {
           <Countdown date={c.date} time={c.time} accent={t.accent} />
         )}
 
-        {/* DETAILS */}
-        {(longDate || c.time || c.venue || c.address || c.dressCode) && (
+        {/* DETAILS (the date is already shown above, so it is not repeated here) */}
+        {(c.time || c.venue || c.address || c.dressCode || safeUrl(c.mapUrl)) && (
           <section
             className="mt-8 space-y-3 rounded-[24px] border p-5 text-left"
             style={card}
           >
-            {longDate && (
-              <p className="flex items-start gap-3 text-[13px]">
-                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" style={{ color: t.accent }} />
-                {longDate}
-              </p>
-            )}
             {c.time && (
               <p className="flex items-start gap-3 text-[13px]">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0" style={{ color: t.accent }} />
@@ -250,6 +252,45 @@ export default function WeddingPreview({ content: c }) {
                 <Navigation className="h-4 w-4" /> Get directions
               </a>
             )}
+          </section>
+        )}
+
+        {/* RSVP (moved up so guests see how to respond before the long content) */}
+        {!celebration && (rsvpPhone || safeUrl(c.rsvpUrl)) && (
+          <section className="mt-6 rounded-[24px] border p-5" style={card}>
+            <Heading accent={t.accent}>RSVP</Heading>
+            {rsvpBy && (
+              <p className="mb-4 text-xs" style={{ color: t.muted }}>
+                Kindly respond by {rsvpBy}
+              </p>
+            )}
+            <div className="space-y-2">
+              {rsvpPhone && (
+                <a
+                  href={whatsappUrl({
+                    phone: rsvpPhone,
+                    message: `Hi ${names[0]} & ${names[1]}! I'm happy to confirm I'll attend your wedding${longDate ? ` on ${longDate}` : ""}. 💍`,
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
+                  style={{ background: t.accent }}
+                >
+                  <MessageCircle className="h-4 w-4" /> RSVP on WhatsApp
+                </a>
+              )}
+              {safeUrl(c.rsvpUrl) && (
+                <a
+                  href={safeUrl(c.rsvpUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"
+                  style={{ borderColor: t.accent, color: t.accent }}
+                >
+                  <ClipboardList className="h-4 w-4" /> Fill RSVP form
+                </a>
+              )}
+            </div>
           </section>
         )}
 
@@ -371,48 +412,9 @@ export default function WeddingPreview({ content: c }) {
           </section>
         )}
 
-        {/* RSVP */}
-        {!celebration && (rsvpPhone || safeUrl(c.rsvpUrl)) && (
-          <section className="mt-10 rounded-[24px] border p-5" style={card}>
-            <Heading accent={t.accent}>RSVP</Heading>
-            {rsvpBy && (
-              <p className="mb-4 text-xs" style={{ color: t.muted }}>
-                Kindly respond by {rsvpBy}
-              </p>
-            )}
-            <div className="space-y-2">
-              {rsvpPhone && (
-                <a
-                  href={whatsappUrl({
-                    phone: rsvpPhone,
-                    message: `Hi ${names[0]} & ${names[1]}! I'm happy to confirm I'll attend your wedding${longDate ? ` on ${longDate}` : ""}. 💍`,
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
-                  style={{ background: t.accent }}
-                >
-                  <MessageCircle className="h-4 w-4" /> RSVP on WhatsApp
-                </a>
-              )}
-              {safeUrl(c.rsvpUrl) && (
-                <a
-                  href={safeUrl(c.rsvpUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"
-                  style={{ borderColor: t.accent, color: t.accent }}
-                >
-                  <ClipboardList className="h-4 w-4" /> Fill RSVP form
-                </a>
-              )}
-            </div>
-          </section>
-        )}
-
         {/* GIFTS */}
         {(safeUrl(c.registryUrl) || c.giftDetails) && (
-          <section className="mt-6 rounded-[24px] border p-5" style={card}>
+          <section className="mt-10 rounded-[24px] border p-5" style={card}>
             <Heading accent={t.accent}>Gifts</Heading>
             {c.giftDetails && (
               <p className="whitespace-pre-line text-[13px] leading-6" style={{ color: t.muted }}>

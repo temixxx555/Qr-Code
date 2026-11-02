@@ -18,6 +18,7 @@ import coupon from "./types/coupon/couponForm";
 import product from "./types/product/productForm";
 import wedding from "./types/wedding/weddingForm";
 import event from "./types/event/eventForm";
+import programme from "./types/programme/programmeForm";
 import nutrition from "./types/nutrition/nutritionForm";
 import autoshop from "./types/autoshop/autoshopForm";
 const registry = {
@@ -40,6 +41,7 @@ const registry = {
   product,
   wedding,
   event,
+  programme,
   nutrition,
   autoshop,
 };

@@ -86,7 +86,10 @@ export function ListEditor({
   fields,
   label = "item",
   defaults = {},
+  maxItems = Infinity,
 }) {
+  const atLimit = value.length >= maxItems;
+
   return (
     <div className="space-y-4">
       {value.map((item, index) => (
@@ -178,7 +181,8 @@ export function ListEditor({
 
       <button
         type="button"
-        className="flex w-full items-center justify-center rounded-xl border border-dashed border-emerald-400 bg-emerald-50/40 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-50"
+        disabled={atLimit}
+        className="flex w-full items-center justify-center rounded-xl border border-dashed border-emerald-400 bg-emerald-50/40 px-4 py-3 text-sm font-semibold text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
         onClick={() =>
           onChange([
             ...value,
@@ -186,7 +190,7 @@ export function ListEditor({
           ])
         }
       >
-        + Add {label}
+        {atLimit ? `Maximum ${maxItems} ${label}s reached` : `+ Add ${label}`}
       </button>
     </div>
   );

@@ -76,6 +76,18 @@ export const fixtures = {
     speakers: [{ name: "Ada Obi", role: "CTO" }],
     schedule: [{ title: "Keynote", time: "09:30" }],
   },
+  programme: {
+    title: "Community Celebration",
+    host: "Community Association",
+    date: "2026-11-20",
+    venue: "Civic Centre",
+    cover: "https://example.com/banner.jpg",
+    crest: "https://example.com/crest.png",
+    programmeItems: [
+      { time: "09:00", title: "Welcome speech", detail: "Host: Ada Obi" },
+      { time: "09:30", title: "Keynote address" },
+    ],
+  },
   nutrition: {
     name: "Honey Oat Granola",
     expiryDate: "2027-06-30",

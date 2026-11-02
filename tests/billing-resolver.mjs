@@ -5,6 +5,11 @@ export async function resolve(specifier, context, next) {
       url: "data:text/javascript,export default {}",
       shortCircuit: true,
     };
+  if (specifier === "next/server")
+    return next(
+      new URL("../node_modules/next/server.js", import.meta.url).href,
+      context,
+    );
   if (specifier.startsWith("@/")) {
     let url = new URL(`../${specifier.slice(2)}`, import.meta.url);
     if (!existsSync(url)) url = new URL(`${url.href}.js`);

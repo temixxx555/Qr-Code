@@ -15,6 +15,7 @@ import {
   Ticket,
   Heart,
   PartyPopper,
+  ListOrdered,
   Salad,
   Car,
 } from "lucide-react";
@@ -345,6 +346,23 @@ qrTypes.push(
       subline: "Friday, 20 November 2026",
       body: "Agenda, speakers, directions and tickets in one scan.",
       footer: "Get Tickets",
+    },
+  },
+  {
+    id: "programme",
+    label: "Programme of Events",
+    icon: ListOrdered,
+    title: "Programme of Events",
+    description:
+      "Share the full order of your event with a banner, crest, times and a clear progression of programme items.",
+    color: "#20c75a",
+    mockupBg: "#064e3b",
+    mockup: {
+      type: "programme",
+      headline: "Programme of Events",
+      subline: "Welcome speech · Keynote · Awards",
+      body: "A clear, step-by-step digital programme for every guest.",
+      footer: "View Programme",
     },
   },
   {

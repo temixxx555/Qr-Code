@@ -192,7 +192,7 @@ function reset(recurring = false) {
     },
   };
 }
-test("concurrent callback and webhook grant one period and one commission", async () => {
+test("concurrent fulfillment grants one period and one commission", async () => {
   reset();
   await Promise.all([
     fulfill("qr_test_fixture", "test", "user1"),

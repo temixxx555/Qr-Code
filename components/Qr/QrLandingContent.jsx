@@ -17,6 +17,7 @@ import coupon from "./types/coupon/couponPreview";
 import product from "./types/product/productPreview";
 import wedding from "./types/wedding/weddingPreview";
 import event from "./types/event/eventPreview";
+import programme from "./types/programme/programmePreview";
 import nutrition from "./types/nutrition/nutritionPreview";
 import autoshop from "./types/autoshop/autoshopPreview";
 const registry = {
@@ -39,6 +40,7 @@ const registry = {
   product,
   wedding,
   event,
+  programme,
   nutrition,
   autoshop,
 };

@@ -10,7 +10,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:billing": "node --test tests/billing-rules.test.mjs && node --experimental-test-module-mocks --import ./tests/billing-loader.mjs --test tests/billing-service.test.mjs",
+    "test:billing": "node --test tests/billing-rules.test.mjs && node --experimental-test-module-mocks --import ./tests/billing-loader.mjs --test tests/billing-service.test.mjs && node --experimental-test-module-mocks --import ./tests/billing-loader.mjs --test tests/billing-webhook.test.mjs",
     "billing:setup": "node scripts/billing-setup.mjs"
   },
   "dependencies": {
